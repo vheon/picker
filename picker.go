@@ -39,15 +39,10 @@ type Picker struct {
 	visible int
 }
 
-func NewPicker(candidates []string, visible int) *Picker {
-
-	all := make([]Candidate, len(candidates))
-	for i, c := range candidates {
-		all[i] = NewCandidate(c)
-	}
+func NewPicker(candidates []Candidate, visible int) *Picker {
 
 	return &Picker{
-		all:     all,
+		all:     candidates,
 		visible: visible,
 	}
 }

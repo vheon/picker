@@ -5,7 +5,12 @@ import (
 	"testing"
 )
 
-var candidates = []string{"zero", "one", "two", "three"}
+var candidates = []Candidate{
+	NewCandidate("zero"),
+	NewCandidate("one"),
+	NewCandidate("two"),
+	NewCandidate("three"),
+}
 
 func TestPicker_SelectFirstCandidateByDefault(t *testing.T) {
 	RegisterTestingT(t)

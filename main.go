@@ -20,9 +20,9 @@ const visibleRows = 20
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	var lines []string
+	var lines []Candidate
 	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+		lines = append(lines, NewCandidate(scanner.Text()))
 	}
 
 	picker := NewPicker(lines, visibleRows)
