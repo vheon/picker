@@ -39,7 +39,8 @@ func TestPicker_CanSelectCandidateUp(t *testing.T) {
 	RegisterTestingT(t)
 
 	view := NewPicker(candidates, 3).Answer("")
-	view.Down().Up()
+	view.Down()
+	view.Up()
 	Expect(view.Index()).To(Equal(0))
 }
 
@@ -61,7 +62,8 @@ func TestPicker_DontShowCandidatesWithScoreZero(t *testing.T) {
 	RegisterTestingT(t)
 
 	view := NewPicker(candidates, 3).Answer("two")
-	view.Down().Down()
+	view.Down()
+	view.Down()
 	Expect(view.Selected()).To(Equal("two"))
 }
 

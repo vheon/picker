@@ -19,11 +19,10 @@ func (v *View) Selected() string {
 	return v.Rows[v.index]
 }
 
-func (v *View) Down() *View {
+func (v *View) Down() {
 	if v.index < len(v.Rows)-1 {
 		v.index++
 	}
-	return v
 }
 
 func (v *View) Up() {
