@@ -4,10 +4,11 @@ import "sort"
 import "sync"
 
 type View struct {
-	height int
-	query  string
-	lines  []string
-	index  int
+	Height int
+	Query  string
+	Rows   []string
+
+	index int
 }
 
 func (v *View) Index() int {
@@ -15,15 +16,11 @@ func (v *View) Index() int {
 }
 
 func (v *View) Selected() string {
-	return v.lines[v.index]
-}
-
-func (v *View) Query() string {
-	return v.query
+	return v.Rows[v.index]
 }
 
 func (v *View) Down() *View {
-	if v.index < len(v.lines)-1 {
+	if v.index < len(v.Rows)-1 {
 		v.index++
 	}
 	return v
@@ -77,6 +74,7 @@ func (p *Picker) Answer(query string) *View {
 		}(candidate)
 	}
 	wg.Wait()
+
 	sort.Sort(CandidateSlice(p.all))
 
 	lines := []string{}
@@ -89,8 +87,8 @@ func (p *Picker) Answer(query string) *View {
 
 	return &View{
 		index:  0,
-		height: p.visible,
-		lines:  lines,
-		query:  query,
+		Height: p.visible,
+		Rows:   lines,
+		Query:  query,
 	}
 }

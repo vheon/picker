@@ -69,5 +69,5 @@ func TestPicker_ReturnAValidViewWhenNoGoodCandidatesAreAvailable(t *testing.T) {
 	RegisterTestingT(t)
 
 	view := NewPicker(candidates, 3).Answer("blah")
-	Expect(view).To(Equal(&View{height: 3, lines: []string{}, query: "blah"}))
+	Expect(view).To(Equal(&View{Height: 3, Rows: []string{}, Query: "blah"}))
 }
