@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 const (
 	ClearLine  string = "\033[2K"
@@ -12,23 +16,34 @@ const (
 )
 
 type Screen struct {
-	nLines int
+	Height int
+	Width  int
 	tty    *TTY
 }
 
-func NewScreen(tty *TTY, visibleLines int) *Screen {
+func NewScreen(tty *TTY) *Screen {
+	height, width := parseSize(tty.Stty("size"))
+
 	return &Screen{
-		nLines: visibleLines,
 		tty:    tty,
+		Height: height,
+		Width:  width,
 	}
+}
+
+func parseSize(size string) (int, int) {
+	ssize := strings.Fields(size)
+	height, _ := strconv.Atoi(ssize[0])
+	width, _ := strconv.Atoi(ssize[1])
+	return height, width
 }
 
 func (s *Screen) ConfigScreen() {
 	s.tty.Stty("-echo", "-icanon")
 }
 
-func (s *Screen) MakeRoom() {
-	for i := 0; i < s.nLines; i++ {
+func (s *Screen) MakeRoom(rows int) {
+	for i := 0; i < rows; i++ {
 		s.tty.Puts("")
 	}
 }
@@ -51,7 +66,7 @@ func (s *Screen) MoveToRow(x int) {
 
 func (s *Screen) Draw(view *View) {
 	s.HideCursor()
-	promptRow := s.tty.Height - s.nLines
+	promptRow := s.Height - view.Height
 	for i, row := range ttyView(view) {
 		s.MoveToRow(promptRow + i)
 		s.tty.Write(ClearLine)

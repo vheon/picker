@@ -6,16 +6,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
-	"strings"
 )
 
 type TTY struct {
 	originalState string
 	Stdin         *os.File
 	Stdout        *os.File
-	Height        int
-	Width         int
 }
 
 func NewTTY() *TTY {
@@ -35,18 +31,7 @@ func NewTTY() *TTY {
 
 	tty.originalState = tty.Stty("-g")
 
-	height, width := parseSize(tty.Stty("size"))
-	tty.Height = height
-	tty.Width = width
-
 	return tty
-}
-
-func parseSize(size string) (int, int) {
-	ssize := strings.Fields(size)
-	height, _ := strconv.Atoi(ssize[0])
-	width, _ := strconv.Atoi(ssize[1])
-	return height, width
 }
 
 func (tty *TTY) Restore() {

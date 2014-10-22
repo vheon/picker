@@ -32,14 +32,13 @@ func main() {
 	tty := NewTTY()
 	defer tty.Restore()
 
-	screen := NewScreen(tty, visibleRows)
+	screen := NewScreen(tty)
 	screen.ConfigScreen()
-
-	screen.MakeRoom()
 
 	// XXX: can we grab this from the view?
 	query := ""
 	view := picker.Answer(query)
+	screen.MakeRoom(view.Height)
 	for {
 		screen.Draw(view)
 
