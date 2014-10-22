@@ -35,65 +35,59 @@ func (v *View) Up() {
 }
 
 type Picker struct {
-	all     []string
+	all     []Candidate
 	visible int
 }
 
 func NewPicker(candidates []string, visible int) *Picker {
+
+	all := make([]Candidate, len(candidates))
+	for i, c := range candidates {
+		all[i] = NewCandidate(c)
+	}
+
 	return &Picker{
-		all:     candidates,
+		all:     all,
 		visible: visible,
 	}
 }
 
-type lessfn func(int, int) bool
-
-type sortableCandidates struct {
-	list []string
-	by   lessfn
+type Candidate struct {
+	value string
+	score float64
 }
 
-func (c sortableCandidates) Len() int           { return len(c.list) }
-func (c sortableCandidates) Swap(i, j int)      { c.list[i], c.list[j] = c.list[j], c.list[i] }
-func (c sortableCandidates) Less(i, j int) bool { return c.by(i, j) }
-
-func scoreByQuery(candidates []string, query string) lessfn {
-	return func(i, j int) bool {
-		return Score(candidates[i], query) > Score(candidates[j], query)
+func NewCandidate(s string) Candidate {
+	return Candidate{
+		value: s,
+		score: 1.0,
 	}
 }
 
-func fisrtZero(c []string, query string) int {
-	for i, str := range c {
-		if Score(str, query) == 0.0 {
-			return i
-		}
-	}
-	return len(c)
-}
+type CandidateSlice []Candidate
+
+func (cs CandidateSlice) Len() int           { return len(cs) }
+func (cs CandidateSlice) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
+func (cs CandidateSlice) Less(i, j int) bool { return cs[i].score > cs[j].score }
 
 func (p *Picker) Answer(query string) *View {
-	candidates := &sortableCandidates{
-		list: p.all,
-		by:   scoreByQuery(p.all, query),
+	for i, c := range p.all {
+		p.all[i].score = Score(c.value, query)
 	}
-	sort.Sort(candidates)
+	sort.Sort(CandidateSlice(p.all))
 
-	//XXX: We are rescoring all the candidates
-	spread := fisrtZero(p.all, query)
-	if spread > p.visible {
-		spread = p.visible
+	lines := []string{}
+	for i := 0; i < p.visible; i++ {
+		if p.all[i].score == 0.0 {
+			break
+		}
+		lines = append(lines, p.all[i].value)
 	}
 
 	return &View{
 		index:  0,
 		height: p.visible,
-		lines:  p.all[:spread],
+		lines:  lines,
 		query:  query,
 	}
-
-	// score `all`
-	// sort `all`
-	// pick best `n` candidates
-	// restore `index` to 0
 }
