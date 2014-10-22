@@ -1,6 +1,7 @@
 package main
 
 import "sort"
+import "sync"
 
 type View struct {
 	height int
@@ -66,9 +67,16 @@ func (cs CandidateSlice) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
 func (cs CandidateSlice) Less(i, j int) bool { return cs[i].score > cs[j].score }
 
 func (p *Picker) Answer(query string) *View {
-	for i, c := range p.all {
-		p.all[i].score = Score(c.value, query)
+	var wg sync.WaitGroup
+	wg.Add(len(p.all))
+	for i := range p.all {
+		candidate := &p.all[i]
+		go func(c *Candidate) {
+			c.score = Score(c.value, query)
+			wg.Done()
+		}(candidate)
 	}
+	wg.Wait()
 	sort.Sort(CandidateSlice(p.all))
 
 	lines := []string{}

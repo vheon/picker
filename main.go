@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 )
 
 const (
@@ -19,6 +20,8 @@ const (
 const visibleRows = 20
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	scanner := bufio.NewScanner(os.Stdin)
 	var lines []Candidate
 	for scanner.Scan() {
