@@ -44,7 +44,7 @@ func main() {
 		screen.Draw(view)
 
 		// XXX: check this
-		key := tty.Readc()
+		key := tty.ReadByte()
 		switch key {
 		case Ctrl_N:
 			view.Down()

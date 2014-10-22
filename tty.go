@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"log"
 	"os"
@@ -66,13 +67,13 @@ func (tty *TTY) command(name string, args ...string) string {
 	return bytes.NewBuffer(out).String()
 }
 
-func (tty *TTY) Readc() byte {
-	b := make([]byte, 1)
-	_, err := tty.Stdin.Read(b)
+func (tty *TTY) ReadByte() byte {
+	buf := bufio.NewReader(tty.Stdin)
+	b, err := buf.ReadByte()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return b[0]
+	return b
 }
 
 func (tty *TTY) Write(s string) {
