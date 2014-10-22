@@ -1,7 +1,9 @@
 package main
 
-import "sort"
-import "sync"
+import (
+	"sort"
+	"sync"
+)
 
 type View struct {
 	Height int
@@ -34,14 +36,18 @@ func (v *View) Up() {
 type Picker struct {
 	all     []Candidate
 	visible int
+	blank   *View
 }
 
 func NewPicker(candidates []Candidate, visible int) *Picker {
-
-	return &Picker{
+	picker := &Picker{
 		all:     candidates,
 		visible: visible,
 	}
+	blank := picker.doAnswer("")
+	picker.blank = blank
+
+	return picker
 }
 
 type Candidate struct {
@@ -63,6 +69,13 @@ func (cs CandidateSlice) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
 func (cs CandidateSlice) Less(i, j int) bool { return cs[i].score > cs[j].score }
 
 func (p *Picker) Answer(query string) *View {
+	if query == "" {
+		return p.blank
+	}
+	return p.doAnswer(query)
+}
+
+func (p *Picker) doAnswer(query string) *View {
 	var wg sync.WaitGroup
 	wg.Add(len(p.all))
 	for i := range p.all {
