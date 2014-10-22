@@ -13,8 +13,7 @@ const (
 	Ctrl_U         = 21
 	Ctrl_W         = 23
 	Backspace      = 127
-	// XXX: check this
-	Enter = 10
+	LF             = 10
 )
 
 const visibleRows = 20
@@ -58,7 +57,7 @@ func main() {
 			view = picker.Answer(query)
 
 		// XXX: check this! Especially how to read from tty
-		case Enter:
+		case LF:
 			fmt.Println(view.Selected())
 			return
 		case Ctrl_U, Ctrl_W:
