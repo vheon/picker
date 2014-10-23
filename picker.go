@@ -44,8 +44,7 @@ func NewPicker(candidates []Candidate, visible int) *Picker {
 		all:     candidates,
 		visible: visible,
 	}
-	blank := picker.doAnswer("")
-	picker.blank = blank
+	picker.blank = picker.doAnswer("")
 
 	return picker
 }
@@ -90,11 +89,11 @@ func (p *Picker) doAnswer(query string) *View {
 	sort.Sort(CandidateSlice(p.all))
 
 	lines := []string{}
-	for i := 0; i < p.visible; i++ {
-		if p.all[i].score == 0.0 {
+	for i, c := range p.all {
+		if c.score == 0.0 || i >= p.visible {
 			break
 		}
-		lines = append(lines, p.all[i].value)
+		lines = append(lines, c.value)
 	}
 
 	return &View{
