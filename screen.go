@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	ClearLine  string = "\033[2K"
+	EraseLine  string = "\033[2K"
 	Move              = "\033[%d;%dH"
 	Invert            = "\033[7m"
 	Reset             = "\033[0m"
