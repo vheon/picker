@@ -57,11 +57,11 @@ func (s *Screen) ShowCursor() {
 }
 
 func (s *Screen) MoveTo(x, y int) {
-	s.tty.Write(fmt.Sprintf(Move, x, y))
+	s.tty.Write(fmt.Sprintf(Move, x+1, y+1))
 }
 
 func (s *Screen) MoveToRow(x int) {
-	s.tty.Write(fmt.Sprintf(Move, x, 1))
+	s.MoveTo(x, 0)
 }
 
 func (s *Screen) Draw(view *View) {
@@ -70,11 +70,14 @@ func (s *Screen) Draw(view *View) {
 	for i, row := range ttyView(view) {
 		s.MoveToRow(promptRow + i)
 		s.tty.Write(ClearLine)
+
+	start_row := s.Height - view.Height - 1
+
 		s.tty.Write(row)
 	}
 	// XXX: 3 magic number
-	s.MoveTo(promptRow, len(view.Query)+3)
 	s.ShowCursor()
+	s.MoveTo(start_row, len(view.Query)+2)
 }
 
 func ansiInverted(s string) string {
