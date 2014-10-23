@@ -66,17 +66,17 @@ func (s *Screen) MoveToRow(x int) {
 
 func (s *Screen) Draw(view *View) {
 	s.HideCursor()
-	promptRow := s.Height - view.Height
-	for i, row := range ttyView(view) {
-		s.MoveToRow(promptRow + i)
-		s.tty.Write(ClearLine)
+	defer s.ShowCursor()
 
 	start_row := s.Height - view.Height - 1
 
+	for i, row := range ttyView(view, s.Width) {
+		s.MoveToRow(start_row + i)
+		s.tty.Write(EraseLine)
 		s.tty.Write(row)
 	}
+
 	// XXX: 3 magic number
-	s.ShowCursor()
 	s.MoveTo(start_row, len(view.Query)+2)
 }
 
@@ -84,10 +84,15 @@ func ansiInverted(s string) string {
 	return Invert + s + Reset
 }
 
-func ttyView(view *View) []string {
+func ttyView(view *View, width int) []string {
 	rows := make([]string, view.Height+1)
 	rows[0] = "> " + view.Query
-	copy(rows[1:], view.Rows)
+	for i, row := range view.Rows {
+		if len(row) > width {
+			row = row[:width]
+		}
+		rows[i+1] = row
+	}
 	if len(view.Rows) > 0 {
 		rows[view.Index()+1] = ansiInverted(view.Selected())
 	}
