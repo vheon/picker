@@ -7,15 +7,6 @@ import (
 	"runtime"
 )
 
-const (
-	Ctrl_N    byte = 14
-	Ctrl_P         = 16
-	Ctrl_U         = 21
-	Ctrl_W         = 23
-	Backspace      = 127
-	LF             = 10
-)
-
 const visibleRows = 20
 
 func main() {
@@ -32,15 +23,15 @@ func main() {
 	tty := NewTTY()
 	defer tty.Restore()
 
-	screen := NewScreen(tty)
-	screen.ConfigScreen()
+	terminal := NewTerminal(tty)
+	terminal.ConfigTerminal()
 
 	// XXX: can we grab this from the view?
 	query := ""
 	view := picker.Answer(query)
-	screen.MakeRoom(view.Height)
+	terminal.MakeRoom(view.Height)
 	for {
-		screen.Draw(view)
+		terminal.Draw(view)
 
 		// XXX: check this
 		key := tty.ReadByte()

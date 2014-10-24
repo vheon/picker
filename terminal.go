@@ -7,6 +7,15 @@ import (
 )
 
 const (
+	Ctrl_N    byte = 14
+	Ctrl_P         = 16
+	Ctrl_U         = 21
+	Ctrl_W         = 23
+	Backspace      = 127
+	LF             = 10
+)
+
+const (
 	EraseLine  string = "\033[2K"
 	Move              = "\033[%d;%dH"
 	Invert            = "\033[7m"
@@ -15,16 +24,16 @@ const (
 	ShowCursor        = "\033[?25h"
 )
 
-type Screen struct {
+type Terminal struct {
 	Height int
 	Width  int
 	tty    *TTY
 }
 
-func NewScreen(tty *TTY) *Screen {
+func NewTerminal(tty *TTY) *Terminal {
 	height, width := parseSize(tty.Stty("size"))
 
-	return &Screen{
+	return &Terminal{
 		tty:    tty,
 		Height: height,
 		Width:  width,
@@ -38,46 +47,50 @@ func parseSize(size string) (int, int) {
 	return height, width
 }
 
-func (s *Screen) ConfigScreen() {
-	s.tty.Stty("-echo", "-icanon")
+func (t *Terminal) ConfigTerminal() {
+	t.tty.Stty("-echo", "-icanon")
 }
 
-func (s *Screen) MakeRoom(rows int) {
+func (t *Terminal) MakeRoom(rows int) {
 	for i := 0; i < rows; i++ {
-		s.tty.Puts("")
+		t.tty.Puts("")
 	}
 }
 
-func (s *Screen) HideCursor() {
-	s.tty.Write(HideCursor)
+func (t *Terminal) HideCursor() {
+	t.tty.Write(HideCursor)
 }
 
-func (s *Screen) ShowCursor() {
-	s.tty.Write(ShowCursor)
+func (t *Terminal) ShowCursor() {
+	t.tty.Write(ShowCursor)
 }
 
-func (s *Screen) MoveTo(x, y int) {
-	s.tty.Write(fmt.Sprintf(Move, x+1, y+1))
+func (t *Terminal) MoveTo(x, y int) {
+	t.tty.Write(fmt.Sprintf(Move, x+1, y+1))
 }
 
-func (s *Screen) MoveToRow(x int) {
-	s.MoveTo(x, 0)
+func (t *Terminal) MoveToRow(x int) {
+	t.MoveTo(x, 0)
 }
 
-func (s *Screen) Draw(view *View) {
-	s.HideCursor()
-	defer s.ShowCursor()
+func (t *Terminal) MoveBottom() {
+	t.MoveToRow(t.Height)
+}
 
-	start_row := s.Height - view.Height - 1
+func (t *Terminal) Draw(view *View) {
+	t.HideCursor()
+	defer t.ShowCursor()
 
-	for i, row := range ttyView(view, s.Width) {
-		s.MoveToRow(start_row + i)
-		s.tty.Write(EraseLine)
-		s.tty.Write(row)
+	start_row := t.Height - view.Height - 1
+
+	for i, row := range ttyView(view, t.Width) {
+		t.MoveToRow(start_row + i)
+		t.tty.Write(EraseLine)
+		t.tty.Write(row)
 	}
 
 	// XXX: 3 magic number
-	s.MoveTo(start_row, len(view.Query)+2)
+	t.MoveTo(start_row, len(view.Query)+2)
 }
 
 func ansiInverted(s string) string {
