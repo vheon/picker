@@ -3,22 +3,26 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 )
 
 const visibleRows = 20
 
-func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
-	scanner := bufio.NewScanner(os.Stdin)
+func readAllCandidates(r io.Reader) []Candidate {
+	scanner := bufio.NewScanner(r)
 	var lines []Candidate
 	for scanner.Scan() {
 		lines = append(lines, NewCandidate(scanner.Text()))
 	}
+	return lines
+}
 
-	picker := NewPicker(lines, visibleRows)
+func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	picker := NewPicker(readAllCandidates(os.Stdin), visibleRows)
 
 	tty := NewTTY()
 	defer tty.Restore()
