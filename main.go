@@ -48,6 +48,7 @@ func main() {
 
 		// XXX: check this! Especially how to read from tty
 		case LF:
+			terminal.MoveBottom()
 			fmt.Println(view.Selected())
 			return
 		case Ctrl_U, Ctrl_W:
