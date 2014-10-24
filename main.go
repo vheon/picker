@@ -10,6 +10,17 @@ import (
 
 const visibleRows = 20
 
+func appendChar(s string, b byte) string {
+	return s + string(b)
+}
+
+func backspace(s string) string {
+	if l := len(s); l > 0 {
+		return s[:l-1]
+	}
+	return s
+}
+
 func readAllCandidates(r io.Reader) []Candidate {
 	scanner := bufio.NewScanner(r)
 	var lines []Candidate
@@ -30,9 +41,7 @@ func main() {
 	terminal := NewTerminal(tty)
 	terminal.ConfigTerminal()
 
-	// XXX: can we grab this from the view?
-	query := ""
-	view := picker.Answer(query)
+	view := picker.Answer("")
 	terminal.MakeRoom(view.Height)
 	for {
 		terminal.Draw(view)
@@ -45,10 +54,7 @@ func main() {
 		case Ctrl_P:
 			view.Up()
 		case Backspace:
-			if len(query) > 0 {
-				query = query[:len(query)-1]
-			}
-			view = picker.Answer(query)
+			view = picker.Answer(backspace(view.Query))
 
 		// XXX: check this! Especially how to read from tty
 		case LF:
@@ -56,11 +62,9 @@ func main() {
 			fmt.Println(view.Selected())
 			return
 		case Ctrl_U, Ctrl_W:
-			query = ""
-			view = picker.Answer(query)
+			view = picker.Answer("")
 		default:
-			query = query + string(key)
-			view = picker.Answer(query)
+			view = picker.Answer(appendChar(view.Query, key))
 		}
 	}
 }
