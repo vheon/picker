@@ -9,6 +9,7 @@ type View struct {
 	Height int
 	Query  string
 	Rows   []string
+	Done   bool
 
 	index int
 }
@@ -101,5 +102,6 @@ func (p *Picker) doAnswer(query string) *View {
 		Height: p.visible,
 		Rows:   lines,
 		Query:  query,
+		Done:   false,
 	}
 }

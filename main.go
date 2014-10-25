@@ -30,6 +30,24 @@ func readAllCandidates(r io.Reader) []Candidate {
 	return lines
 }
 
+func handle_input(picker *Picker, view *View, key byte) *View {
+	switch key {
+	case Ctrl_N:
+		view.Down()
+	case Ctrl_P:
+		view.Up()
+	case Backspace:
+		view = picker.Answer(backspace(view.Query))
+	case LF:
+		view.Done = true
+	case Ctrl_U, Ctrl_W:
+		view = picker.Answer("")
+	default:
+		view = picker.Answer(appendChar(view.Query, key))
+	}
+	return view
+}
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -43,28 +61,11 @@ func main() {
 
 	view := picker.Answer("")
 	terminal.MakeRoom(view.Height)
-	for {
+	for !view.Done {
 		terminal.Draw(view)
-
-		// XXX: check this
-		key := tty.ReadByte()
-		switch key {
-		case Ctrl_N:
-			view.Down()
-		case Ctrl_P:
-			view.Up()
-		case Backspace:
-			view = picker.Answer(backspace(view.Query))
-
-		// XXX: check this! Especially how to read from tty
-		case LF:
-			terminal.MoveBottom()
-			fmt.Println(view.Selected())
-			return
-		case Ctrl_U, Ctrl_W:
-			view = picker.Answer("")
-		default:
-			view = picker.Answer(appendChar(view.Query, key))
-		}
+		view = handle_input(picker, view, tty.ReadByte())
 	}
+
+	terminal.MoveBottom()
+	fmt.Println(view.Selected())
 }
