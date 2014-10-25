@@ -11,7 +11,8 @@ type View struct {
 	Rows   []string
 	Done   bool
 
-	index int
+	index  int
+	prompt string
 }
 
 func (v *View) Index() int {
@@ -98,10 +99,11 @@ func (p *Picker) doAnswer(query string) *View {
 	}
 
 	return &View{
-		index:  0,
 		Height: p.visible,
 		Rows:   lines,
 		Query:  query,
 		Done:   false,
+		index:  0,
+		prompt: "> ",
 	}
 }

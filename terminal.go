@@ -89,8 +89,7 @@ func (t *Terminal) Draw(view *View) {
 		t.tty.Write(row)
 	}
 
-	// XXX: 3 magic number
-	t.MoveTo(start_row, len(view.Query)+2)
+	t.MoveTo(start_row, len(view.Query)+len(view.prompt))
 }
 
 func ansiInverted(s string) string {
@@ -99,7 +98,7 @@ func ansiInverted(s string) string {
 
 func ttyView(view *View, width int) []string {
 	rows := make([]string, view.Height+1)
-	rows[0] = "> " + view.Query
+	rows[0] = view.prompt + view.Query
 	for i, row := range view.Rows {
 		if len(row) > width {
 			row = row[:width]
