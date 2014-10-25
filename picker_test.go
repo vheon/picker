@@ -74,7 +74,7 @@ func TestPicker_ReturnAValidViewWhenNoGoodCandidatesAreAvailable(t *testing.T) {
 	Expect(view).To(Equal(&View{Height: 3, Rows: []string{}, Query: "blah", prompt: "> "}))
 }
 
-func TestPicker(t *testing.T) {
+func TestPicker_HandleWhenCandidatesAreFewerThanHeight(t *testing.T) {
 	RegisterTestingT(t)
 
 	view := NewPicker(candidates, 5).Answer("")
