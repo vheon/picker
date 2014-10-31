@@ -53,7 +53,7 @@ func (t *Terminal) ConfigTerminal() {
 
 func (t *Terminal) MakeRoom(rows int) {
 	for i := 0; i < rows; i++ {
-		t.tty.Puts("")
+		t.tty.Write("\n")
 	}
 }
 

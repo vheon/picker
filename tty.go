@@ -67,7 +67,3 @@ func (tty *TTY) Write(s string) {
 		log.Fatal(err)
 	}
 }
-
-func (tty *TTY) Puts(s string) {
-	tty.Write(s + "\n")
-}
