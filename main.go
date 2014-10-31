@@ -65,7 +65,5 @@ func main() {
 		terminal.Draw(view)
 		view = handle_input(picker, view, tty.ReadByte())
 	}
-
-	terminal.MoveBottom()
 	fmt.Println(view.Selected())
 }
