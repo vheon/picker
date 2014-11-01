@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sort"
 	"strings"
+	"unicode/utf8"
 )
 
 func indexRuneStarting(str string, r rune, start int) int {
@@ -33,7 +34,7 @@ func findMatch(candidate string, query string) (Match, error) {
 			return nil, errors.New("No Match Found")
 		}
 		runePositions = append(runePositions, start)
-		start += 1
+		start += utf8.RuneLen(r)
 	}
 	return runePositions, nil
 }
@@ -63,10 +64,11 @@ func Score(candidate, query string) float64 {
 		return 0.0
 	}
 
-	firstQueryCharPositions := allIndexRune(candidate, rune(query[0]))
+	first, _ := utf8.DecodeRuneInString(query)
+	firstQueryRunePositions := allIndexRune(candidate, first)
 
 	var matches []Match
-	for _, start := range firstQueryCharPositions {
+	for _, start := range firstQueryRunePositions {
 		match, err := findMatch(candidate[start:], query)
 		if err != nil {
 			continue

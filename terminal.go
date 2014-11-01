@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	Ctrl_N    byte = 14
+	Ctrl_N    rune = 14
 	Ctrl_P         = 16
 	Ctrl_U         = 21
 	Ctrl_W         = 23

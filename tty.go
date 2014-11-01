@@ -52,13 +52,13 @@ func (tty *TTY) command(name string, args ...string) string {
 	return bytes.NewBuffer(out).String()
 }
 
-func (tty *TTY) ReadByte() byte {
+func (tty *TTY) ReadRune() rune {
 	buf := bufio.NewReader(tty.Stdin)
-	b, err := buf.ReadByte()
+	r, _, err := buf.ReadRune()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return b
+	return r
 }
 
 func (tty *TTY) Write(s string) {
