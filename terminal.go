@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/vheon/picker/tty"
 )
 
 const (
@@ -27,10 +29,10 @@ const (
 type Terminal struct {
 	Height int
 	Width  int
-	tty    *TTY
+	tty    *tty.TTY
 }
 
-func NewTerminal(tty *TTY) *Terminal {
+func NewTerminal(tty *tty.TTY) *Terminal {
 	height, width := parseSize(tty.Stty("size"))
 
 	return &Terminal{

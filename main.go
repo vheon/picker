@@ -7,6 +7,8 @@ import (
 	"os"
 	"runtime"
 	"unicode/utf8"
+
+	"github.com/vheon/picker/tty"
 )
 
 const visibleRows = 20
@@ -55,7 +57,7 @@ func main() {
 
 	picker := NewPicker(readAllCandidates(os.Stdin), visibleRows)
 
-	tty := NewTTY()
+	tty := tty.NewTTY()
 	defer tty.Restore()
 
 	terminal := NewTerminal(tty)
