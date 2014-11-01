@@ -37,6 +37,11 @@ func (v *View) Up() {
 	}
 }
 
+func (v *View) ClearPrompt() {
+	v.Query = ""
+	v.prompt = ""
+}
+
 func (v *View) DrawOnTerminal(t *terminal.Terminal) {
 	t.HideCursor()
 	defer t.ShowCursor()

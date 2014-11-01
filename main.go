@@ -45,6 +45,7 @@ func handle_input(picker *Picker, view *View, key rune) *View {
 		view = picker.Answer(backspace(view.Query))
 	case terminal.LF:
 		view.Done = true
+		view.ClearPrompt()
 	case terminal.Ctrl_U, terminal.Ctrl_W:
 		view = picker.Answer("")
 	default:
@@ -66,10 +67,10 @@ func main() {
 
 	view := picker.Answer("")
 	terminal.MakeRoom(view.Height)
+	view.DrawOnTerminal(terminal)
 	for !view.Done {
-		view.DrawOnTerminal(terminal)
 		view = handle_input(picker, view, tty.ReadRune())
+		view.DrawOnTerminal(terminal)
 	}
-	// should clean first?
 	fmt.Println(view.Selected())
 }
