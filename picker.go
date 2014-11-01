@@ -3,6 +3,8 @@ package main
 import (
 	"sort"
 	"sync"
+
+	"github.com/vheon/picker/terminal"
 )
 
 type View struct {
@@ -35,7 +37,7 @@ func (v *View) Up() {
 	}
 }
 
-func (v *View) DrawOnTerminal(t *Terminal) {
+func (v *View) DrawOnTerminal(t *terminal.Terminal) {
 	t.HideCursor()
 	defer t.ShowCursor()
 
@@ -48,7 +50,7 @@ func (v *View) DrawOnTerminal(t *Terminal) {
 	t.MoveTo(start_row, len(v.Query)+len(v.prompt))
 }
 
-func (v *View) toAnsiForm(t *Terminal) []string {
+func (v *View) toAnsiForm(t *terminal.Terminal) []string {
 	rows := make([]string, v.Height+1)
 	rows[0] = v.prompt + v.Query
 	for i, row := range v.Rows {
@@ -58,7 +60,7 @@ func (v *View) toAnsiForm(t *Terminal) []string {
 		rows[i+1] = row
 	}
 	if len(v.Rows) > 0 {
-		rows[v.Index()+1] = AnsiInverted(v.Selected())
+		rows[v.Index()+1] = terminal.AnsiInverted(v.Selected())
 	}
 	return rows
 }

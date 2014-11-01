@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"unicode/utf8"
 
+	"github.com/vheon/picker/terminal"
 	"github.com/vheon/picker/tty"
 )
 
@@ -36,15 +37,15 @@ func readAllCandidates(r io.Reader) []Candidate {
 
 func handle_input(picker *Picker, view *View, key rune) *View {
 	switch key {
-	case Ctrl_N:
+	case terminal.Ctrl_N:
 		view.Down()
-	case Ctrl_P:
+	case terminal.Ctrl_P:
 		view.Up()
-	case Backspace:
+	case terminal.Backspace:
 		view = picker.Answer(backspace(view.Query))
-	case LF:
+	case terminal.LF:
 		view.Done = true
-	case Ctrl_U, Ctrl_W:
+	case terminal.Ctrl_U, terminal.Ctrl_W:
 		view = picker.Answer("")
 	default:
 		view = picker.Answer(appendChar(view.Query, key))
@@ -60,7 +61,7 @@ func main() {
 	tty := tty.NewTTY()
 	defer tty.Restore()
 
-	terminal := NewTerminal(tty)
+	terminal := terminal.NewTerminal(tty)
 	terminal.ConfigTerminal()
 
 	view := picker.Answer("")
@@ -69,5 +70,6 @@ func main() {
 		view.DrawOnTerminal(terminal)
 		view = handle_input(picker, view, tty.ReadRune())
 	}
+	// should clean first?
 	fmt.Println(view.Selected())
 }
