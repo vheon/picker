@@ -15,14 +15,14 @@ func indexRuneStarting(str string, r rune, start int) int {
 	return idx + start
 }
 
-func allIndexRune(str string, r rune) []int {
-	var allIndexRune []int
+func indexesRune(str string, r rune) []int {
+	var indexes []int
 	for i, c := range str {
 		if c == r {
-			allIndexRune = append(allIndexRune, i)
+			indexes = append(indexes, i)
 		}
 	}
-	return allIndexRune
+	return indexes
 }
 
 func findMatch(candidate string, query string) (Match, error) {
@@ -65,7 +65,7 @@ func Score(candidate, query string) float64 {
 	}
 
 	first, _ := utf8.DecodeRuneInString(query)
-	firstQueryRunePositions := allIndexRune(candidate, first)
+	firstQueryRunePositions := indexesRune(candidate, first)
 
 	var matches []Match
 	for _, start := range firstQueryRunePositions {
