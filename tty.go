@@ -9,9 +9,11 @@ import (
 )
 
 type TTY struct {
+	Stdin  *os.File
+	Stdout *os.File
+
 	originalState string
-	Stdin         *os.File
-	Stdout        *os.File
+	reader        *bufio.Reader
 }
 
 func NewTTY() *TTY {
@@ -30,6 +32,7 @@ func NewTTY() *TTY {
 	}
 
 	tty.originalState = tty.Stty("-g")
+	tty.reader = bufio.NewReader(stdin)
 
 	return tty
 }
@@ -53,8 +56,7 @@ func (tty *TTY) command(name string, args ...string) string {
 }
 
 func (tty *TTY) ReadRune() rune {
-	buf := bufio.NewReader(tty.Stdin)
-	r, _, err := buf.ReadRune()
+	r, _, err := tty.reader.ReadRune()
 	if err != nil {
 		log.Fatal(err)
 	}
