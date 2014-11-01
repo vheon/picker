@@ -77,36 +77,12 @@ func (t *Terminal) MoveBottom() {
 	t.MoveToRow(t.Height)
 }
 
-func (t *Terminal) Draw(view *View) {
-	t.HideCursor()
-	defer t.ShowCursor()
-
-	start_row := t.Height - view.Height - 1
-
-	for i, row := range ttyView(view, t.Width) {
-		t.MoveToRow(start_row + i)
-		t.tty.Write(EraseLine)
-		t.tty.Write(row)
-	}
-
-	t.MoveTo(start_row, len(view.Query)+len(view.prompt))
+func (t *Terminal) WriteToLine(l int, s string) {
+	t.MoveToRow(l)
+	t.tty.Write(EraseLine)
+	t.tty.Write(s)
 }
 
-func ansiInverted(s string) string {
+func AnsiInverted(s string) string {
 	return Invert + s + Reset
-}
-
-func ttyView(view *View, width int) []string {
-	rows := make([]string, view.Height+1)
-	rows[0] = view.prompt + view.Query
-	for i, row := range view.Rows {
-		if len(row) > width {
-			row = row[:width]
-		}
-		rows[i+1] = row
-	}
-	if len(view.Rows) > 0 {
-		rows[view.Index()+1] = ansiInverted(view.Selected())
-	}
-	return rows
 }

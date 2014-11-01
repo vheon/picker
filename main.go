@@ -64,7 +64,7 @@ func main() {
 	view := picker.Answer("")
 	terminal.MakeRoom(view.Height)
 	for !view.Done {
-		terminal.Draw(view)
+		view.DrawOnTerminal(terminal)
 		view = handle_input(picker, view, tty.ReadRune())
 	}
 	fmt.Println(view.Selected())

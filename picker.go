@@ -35,6 +35,34 @@ func (v *View) Up() {
 	}
 }
 
+func (v *View) DrawOnTerminal(t *Terminal) {
+	t.HideCursor()
+	defer t.ShowCursor()
+
+	start_row := t.Height - v.Height - 1
+
+	for i, row := range v.toAnsiForm(t) {
+		t.WriteToLine(start_row+i, row)
+	}
+
+	t.MoveTo(start_row, len(v.Query)+len(v.prompt))
+}
+
+func (v *View) toAnsiForm(t *Terminal) []string {
+	rows := make([]string, v.Height+1)
+	rows[0] = v.prompt + v.Query
+	for i, row := range v.Rows {
+		if len(row) > t.Width {
+			row = row[:t.Width]
+		}
+		rows[i+1] = row
+	}
+	if len(v.Rows) > 0 {
+		rows[v.Index()+1] = AnsiInverted(v.Selected())
+	}
+	return rows
+}
+
 type Picker struct {
 	all     []Candidate
 	visible int
