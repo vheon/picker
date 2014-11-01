@@ -49,10 +49,6 @@ func parseSize(size string) (int, int) {
 	return height, width
 }
 
-func (t *Terminal) ConfigTerminal() {
-	t.tty.Stty("-echo", "-icanon")
-}
-
 func (t *Terminal) MakeRoom(rows int) {
 	for i := 0; i < rows; i++ {
 		t.tty.Write("\n")
