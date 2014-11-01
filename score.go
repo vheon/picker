@@ -80,9 +80,8 @@ func Score(candidate, query string) float64 {
 		return 0.0
 	}
 
-	best := bestMatch(matches)
-
-	score := float64(best.Length())
+	var score float64
+	score = float64(bestMatch(matches).Length())
 	score = float64(len(query)) / score
 	score = score / float64(len(candidate))
 
