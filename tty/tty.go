@@ -16,7 +16,7 @@ type TTY struct {
 	reader        *bufio.Reader
 }
 
-func NewTTY() *TTY {
+func New() *TTY {
 	stdin, err := os.Open("/dev/tty")
 	if err != nil {
 		log.Fatal(err)
