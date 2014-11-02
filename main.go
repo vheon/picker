@@ -60,7 +60,7 @@ func main() {
 	picker := NewPicker(readAllCandidates(os.Stdin), visibleRows)
 
 	tty := tty.New()
-	tty.Stty("-echo", "icanon")
+	tty.Stty("-echo", "-icanon")
 	defer tty.Restore()
 
 	terminal := terminal.NewTerminal(tty)
