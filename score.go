@@ -64,6 +64,9 @@ func Score(candidate, query string) float64 {
 		return 0.0
 	}
 
+	candidate = strings.ToLower(candidate)
+	query = strings.ToLower(query)
+
 	first, _ := utf8.DecodeRuneInString(query)
 	firstQueryRunePositions := indexesRune(candidate, first)
 

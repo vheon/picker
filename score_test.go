@@ -41,3 +41,10 @@ func TestScore_PreferShorterCandidate(t *testing.T) {
 
 	Expect(Score("long string abc", "abc")).To(BeNumerically("<", Score("xabc", "abc")))
 }
+
+func TestScore_IsCaseInsensitive(t *testing.T) {
+	RegisterTestingT(t)
+
+	Expect(Score("aaa/bbb/File", "abf")).To(BeNumerically(">", 0.0))
+	Expect(Score("aaa/bbb/file", "abF")).To(BeNumerically(">", 0.0))
+}
