@@ -1,50 +1,100 @@
 package main
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
 )
 
-func TestScore_WithEmptyQuery_ReturnOne(t *testing.T) {
-	RegisterTestingT(t)
+func TestScore(t *testing.T) {
 
-	Expect(Score("a", "")).To(Equal(1.0))
-}
+	var absTests = []struct {
+		candidate string
+		query     string
+		wanted    float64
+	}{
+		{candidate: "a", query: "", wanted: 1.0},
+		{candidate: "a", query: "aa", wanted: 0.0},
+		{candidate: "abcx", query: "abcd", wanted: 0.0},
+		{candidate: "axbxcx", query: "aac", wanted: 0.0},
+	}
 
-func TestScore_WithQueryLongerThanCandidate_ReturnZero(t *testing.T) {
-	RegisterTestingT(t)
+	for _, test := range absTests {
+		s := Score(test.candidate, test.query)
+		if s != test.wanted {
+			t.Errorf("Score(%q, %q) = %f, wanted %f",
+				test.candidate,
+				test.query,
+				s,
+				test.wanted)
+		}
+	}
 
-	Expect(Score("a", "aa")).To(Equal(0.0))
-}
+	var greaterTests = []struct {
+		candidate string
+		query     string
+		lower     float64
+	}{
+		{candidate: "abcx", query: "abc", lower: 0.0},
+		{candidate: "abcx", query: "abc", lower: 0.0},
+		{candidate: "aaa/bbb/File", query: "abf", lower: 0.0},
+		{candidate: "aaa/bbb/file", query: "abF", lower: 0.0},
+	}
 
-func TestScore_AllTheLettersInQueryMustBePresent(t *testing.T) {
-	RegisterTestingT(t)
+	for _, test := range greaterTests {
+		s := Score(test.candidate, test.query)
+		if s <= test.lower {
+			t.Errorf("Score(%q, %q) = %f, wanted > %f",
+				test.candidate,
+				test.query,
+				s,
+				test.lower)
+		}
+	}
 
-	Expect(Score("abcx", "abcd")).To(Equal(0.0))
-	Expect(Score("abcx", "abc")).To(BeNumerically(">", 0.0))
-	Expect(Score("abcx", "abc")).To(BeNumerically(">", 0.0))
-	Expect(Score("axbcx", "abc")).To(BeNumerically(">", 0.0))
-	Expect(Score("axbcx", "aa")).To(Equal(0.0))
-}
+	var comparingTests = []struct {
+		candidate1 string
+		query1     string
 
-func TestScore_PreferCompactMatch(t *testing.T) {
-	RegisterTestingT(t)
+		candidate2 string
+		query2     string
+	}{
+		{"yxxxabxc", "abc", "axxxybxc", "abc"},
+		{"xabc", "abc", "long string abc", "abc"},
+	}
 
-	Expect(Score("yxxxabxc", "abc")).To(BeNumerically(">", Score("axxxybxc", "abc")))
-	Expect(Score("axxxabxc", "abc")).To(Equal(Score("yxxxabxc", "abc")))
+	for _, test := range comparingTests {
+		s1 := Score(test.candidate1, test.query1)
+		s2 := Score(test.candidate2, test.query2)
+		if s1 <= s2 {
+			t.Errorf("Score(%q, %q) <= Score(%q, %q), wanted >",
+				test.candidate1,
+				test.query1,
+				test.candidate2,
+				test.query2)
+		}
 
-	Expect(Score("abcxxxabxxxc", "abc")).To(Equal(Score("abcxxxyyxxxy", "abc")))
-}
+	}
 
-func TestScore_PreferShorterCandidate(t *testing.T) {
-	RegisterTestingT(t)
+	var equalTests = []struct {
+		candidate1 string
+		query1     string
 
-	Expect(Score("long string abc", "abc")).To(BeNumerically("<", Score("xabc", "abc")))
-}
+		candidate2 string
+		query2     string
+	}{
+		{"abcxxxabxxxc", "abc", "xabcxxxyyxxy", "abc"},
+		{"axxxabxc", "abc", "yxxxabxc", "abc"},
+	}
 
-func TestScore_IsCaseInsensitive(t *testing.T) {
-	RegisterTestingT(t)
+	for _, test := range equalTests {
+		s1 := Score(test.candidate1, test.query1)
+		s2 := Score(test.candidate2, test.query2)
+		if s1 != s2 {
+			t.Errorf("Score(%q, %q) != Score(%q, %q), wanted =",
+				test.candidate1,
+				test.query1,
+				test.candidate2,
+				test.query2)
+		}
 
-	Expect(Score("aaa/bbb/File", "abf")).To(BeNumerically(">", 0.0))
-	Expect(Score("aaa/bbb/file", "abF")).To(BeNumerically(">", 0.0))
+	}
 }
