@@ -57,14 +57,13 @@ const visibleRows = 20
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	picker := NewPicker(readAllCandidates(os.Stdin), visibleRows)
-
 	tty := tty.New()
 	tty.Stty("-echo", "-icanon")
 	defer tty.Restore()
 
 	terminal := terminal.NewTerminal(tty)
 
+	picker := NewPicker(readAllCandidates(os.Stdin), visibleRows)
 	view := picker.Answer("")
 	terminal.MakeRoom(view.Height)
 	view.DrawOnTerminal(terminal)
