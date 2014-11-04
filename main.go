@@ -12,8 +12,6 @@ import (
 	"github.com/vheon/picker/tty"
 )
 
-const visibleRows = 20
-
 func appendChar(s string, b rune) string {
 	return s + string(b)
 }
@@ -53,6 +51,8 @@ func handle_input(picker *Picker, view *View, key rune) *View {
 	}
 	return view
 }
+
+const visibleRows = 20
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
