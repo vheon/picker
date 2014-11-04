@@ -59,15 +59,19 @@ func (v *View) toAnsiForm(t *terminal.Terminal) []string {
 	rows := make([]string, v.Height+1)
 	rows[0] = v.prompt + v.Query
 	for i, row := range v.Rows {
-		if len(row) > t.Width {
-			row = row[:t.Width]
-		}
-		rows[i+1] = row
+		rows[i+1] = cutAt(row, t.Width)
 	}
 	if len(v.Rows) > 0 {
 		rows[v.Index()+1] = terminal.AnsiInverted(v.Selected())
 	}
 	return rows
+}
+
+func cutAt(s string, width int) string {
+	if len(s) > width {
+		return s[:width]
+	}
+	return s
 }
 
 type Picker struct {
