@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -52,10 +53,11 @@ func handle_input(picker *Picker, view *View, key rune) *View {
 	return view
 }
 
-const visibleRows = 20
+var visibleRows = flag.Int("h", 20, "Number of visible candidates")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	flag.Parse()
 
 	tty := tty.New()
 	tty.Stty("-echo", "-icanon")
@@ -63,7 +65,14 @@ func main() {
 
 	terminal := terminal.NewTerminal(tty)
 
-	picker := NewPicker(readAllCandidates(os.Stdin), visibleRows)
+	if *visibleRows > terminal.Height {
+		*visibleRows = terminal.Height - 1
+	}
+	if *visibleRows < 1 {
+		*visibleRows = 1
+	}
+
+	picker := NewPicker(readAllCandidates(os.Stdin), *visibleRows)
 	view := picker.Answer("")
 	terminal.MakeRoom(view.Height)
 	view.DrawOnTerminal(terminal)
