@@ -63,10 +63,10 @@ func main() {
 	tty.Stty("-echo", "-icanon")
 	defer tty.Restore()
 
-	terminal := terminal.NewTerminal(tty)
+	term := terminal.NewTerminal(tty)
 
-	if *visibleRows > terminal.Height {
-		*visibleRows = terminal.Height - 1
+	if *visibleRows > term.Height {
+		*visibleRows = term.Height - 1
 	}
 	if *visibleRows < 1 {
 		*visibleRows = 1
@@ -74,11 +74,11 @@ func main() {
 
 	picker := NewPicker(readAllCandidates(os.Stdin), *visibleRows)
 	view := picker.Answer("")
-	terminal.MakeRoom(view.Height)
-	view.DrawOnTerminal(terminal)
+	term.MakeRoom(view.Height)
+	view.DrawOnTerminal(term)
 	for !view.Done {
 		view = handle_input(picker, view, tty.ReadRune())
-		view.DrawOnTerminal(terminal)
+		view.DrawOnTerminal(term)
 	}
 	fmt.Println(view.Selected())
 }
