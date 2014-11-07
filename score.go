@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"sort"
 	"strings"
 	"unicode/utf8"
 )
@@ -45,15 +44,17 @@ func (m Match) Length() int {
 	return m[len(m)-1] - m[0] + 1
 }
 
-type matchSlice []Match
-
-func (ms matchSlice) Len() int           { return len(ms) }
-func (ms matchSlice) Swap(i, j int)      { ms[i], ms[j] = ms[j], ms[i] }
-func (ms matchSlice) Less(i, j int) bool { return ms[i].Length() < ms[j].Length() }
-
 func bestMatch(ms []Match) Match {
-	sort.Sort(matchSlice(ms))
-	return ms[0]
+	if len(ms) == 0 {
+		return nil
+	}
+	best := ms[0]
+	for _, m := range ms {
+		if m.Length() < best.Length() {
+			best = m
+		}
+	}
+	return best
 }
 
 func Score(candidate, query string) float64 {
