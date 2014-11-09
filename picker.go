@@ -119,14 +119,23 @@ func (p *Picker) Answer(query string) *View {
 }
 
 func (p *Picker) doAnswer(query string) *View {
+	all := make(chan *Candidate)
+	go func() {
+		for i := range p.all {
+			all <- &p.all[i]
+		}
+		close(all)
+	}()
+
 	var wg sync.WaitGroup
-	wg.Add(len(p.all))
-	for i := range p.all {
-		candidate := &p.all[i]
-		go func(c *Candidate) {
-			c.score = Score(c.value, query)
+	for i := 0; i < 64; i++ {
+		wg.Add(1)
+		go func() {
+			for c := range all {
+				c.score = Score(c.value, query)
+			}
 			wg.Done()
-		}(candidate)
+		}()
 	}
 	wg.Wait()
 
