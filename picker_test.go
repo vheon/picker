@@ -36,7 +36,7 @@ var testsIndex = []struct {
 
 func TestPickerViewIndex(t *testing.T) {
 
-	for _, test := range tests {
+	for _, test := range testsIndex {
 		view := NewPicker(candidates, test.height).Answer("")
 		moveViewCursor(view, test.dir)
 		if got := view.Index(); got != test.expected {
@@ -54,7 +54,6 @@ var testsSelected = []struct {
 	{query: "two", dir: "", expected: "two"},
 	{query: "two", dir: "dd", expected: "two"},
 	{query: "blah", dir: "", expected: ""},
-	{query: "", dir: "", expected: ""},
 }
 
 func TestPickerViewSelected(t *testing.T) {
@@ -62,7 +61,7 @@ func TestPickerViewSelected(t *testing.T) {
 		view := NewPicker(candidates, 3).Answer(test.query)
 		moveViewCursor(view, test.dir)
 		if s := view.Selected(); s != test.expected {
-			t.Errorf("Expected %v, got %v", s, test.expected)
+			t.Errorf("Expected %q, got %q", test.expected, s)
 		}
 	}
 }
