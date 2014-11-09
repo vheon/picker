@@ -1,7 +1,6 @@
 package main
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
 )
 
@@ -12,72 +11,68 @@ var candidates = []Candidate{
 	NewCandidate("three"),
 }
 
-func TestPicker_SelectFirstCandidateByDefault(t *testing.T) {
-	RegisterTestingT(t)
-
-	view := NewPicker(candidates, 3).Answer("")
-	Expect(view.Index()).To(Equal(0))
+func moveViewCursor(view *View, dir string) {
+	for _, d := range dir {
+		switch d {
+		case 'd':
+			view.Down()
+		case 'u':
+			view.Up()
+		}
+	}
 }
 
-func TestPicker_CanSelectCandidateDown(t *testing.T) {
-	RegisterTestingT(t)
-
-	view := NewPicker(candidates, 3).Answer("")
-	view.Down()
-	Expect(view.Index()).To(Equal(1))
+var testsIndex = []struct {
+	height   int
+	expected int
+	dir      string
+}{
+	{height: 3, expected: 0, dir: ""},
+	{height: 3, expected: 1, dir: "d"},
+	{height: 1, expected: 0, dir: "d"},
+	{height: 3, expected: 0, dir: "du"},
+	{height: 3, expected: 0, dir: "u"},
 }
 
-func TestPicker_DoNotSelectCandidatesDownOverTheEdge(t *testing.T) {
-	RegisterTestingT(t)
+func TestPickerViewIndex(t *testing.T) {
 
-	view := NewPicker(candidates, 1).Answer("")
-	view.Down()
-	Expect(view.Index()).To(Equal(0))
+	for _, test := range tests {
+		view := NewPicker(candidates, test.height).Answer("")
+		moveViewCursor(view, test.dir)
+		if got := view.Index(); got != test.expected {
+			t.Errorf("Expected index %v, got %v", test.height, test.dir, test.expected, got)
+		}
+
+	}
 }
 
-func TestPicker_CanSelectCandidateUp(t *testing.T) {
-	RegisterTestingT(t)
-
-	view := NewPicker(candidates, 3).Answer("")
-	view.Down()
-	view.Up()
-	Expect(view.Index()).To(Equal(0))
+var testsSelected = []struct {
+	query    string
+	dir      string
+	expected string
+}{
+	{query: "two", dir: "", expected: "two"},
+	{query: "two", dir: "dd", expected: "two"},
+	{query: "blah", dir: "", expected: ""},
+	{query: "", dir: "", expected: ""},
 }
 
-func TestPicker_DoNotSelectCandidatesUpOverTheEdge(t *testing.T) {
-	RegisterTestingT(t)
-
-	view := NewPicker(candidates, 3).Answer("")
-	view.Up()
-	Expect(view.Index()).To(Equal(0))
+func TestPickerViewSelected(t *testing.T) {
+	for _, test := range testsSelected {
+		view := NewPicker(candidates, 3).Answer(test.query)
+		moveViewCursor(view, test.dir)
+		if s := view.Selected(); s != test.expected {
+			t.Errorf("Expected %v, got %v", s, test.expected)
+		}
+	}
 }
 
-func TestPicker_SortTheRightAnswerForAQuery(t *testing.T) {
-	RegisterTestingT(t)
-	view := NewPicker(candidates, 3).Answer("two")
-	Expect(view.Selected()).To(Equal("two"))
-}
-
-func TestPicker_DontShowCandidatesWithScoreZero(t *testing.T) {
-	RegisterTestingT(t)
-
-	view := NewPicker(candidates, 3).Answer("two")
-	view.Down()
-	view.Down()
-	Expect(view.Selected()).To(Equal("two"))
-}
-
-func TestPicker_ReturnAValidViewWhenNoGoodCandidatesAreAvailable(t *testing.T) {
-	RegisterTestingT(t)
-
-	view := NewPicker(candidates, 3).Answer("blah")
-	Expect(view).To(Equal(&View{Height: 3, Rows: []string{}, Query: "blah", prompt: "> "}))
-}
-
-func TestPicker_HandleWhenCandidatesAreFewerThanHeight(t *testing.T) {
-	RegisterTestingT(t)
-
+func TestPickerViewHandleWhenCandidatesAreFewerThanHeight(t *testing.T) {
 	view := NewPicker(candidates, 5).Answer("")
-	Expect(len(view.Rows)).To(Equal(4))
-	Expect(view.Height).To(Equal(5))
+	if lr := len(view.Rows); lr != 4 {
+		t.Errorf("Expected %v rows, got", lr)
+	}
+	if view.Height != 5 {
+		t.Errorf("Expected %v rows, got", view.Height)
+	}
 }

@@ -22,6 +22,9 @@ func (v *View) Index() int {
 }
 
 func (v *View) Selected() string {
+	if len(v.Rows)-1 < v.index {
+		return ""
+	}
 	return v.Rows[v.index]
 }
 
