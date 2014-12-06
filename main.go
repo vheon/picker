@@ -28,36 +28,36 @@ const (
 	// keyEnd
 )
 
-type movements struct {
+type steps struct {
 	Up    int
 	Down  int
 	Left  int
 	Right int
 }
 
-func move(directions movements) string {
-	count := directions.Down + directions.Up + directions.Left + directions.Right
+func move(step steps) string {
+	count := step.Down + step.Up + step.Left + step.Right
 	movement := make([]rune, 3*(count))
 	m := movement
-	for i := 0; i < directions.Up; i++ {
+	for i := 0; i < step.Up; i++ {
 		m[0] = keyEscape
 		m[1] = '['
 		m[2] = 'A'
 		m = m[3:]
 	}
-	for i := 0; i < directions.Down; i++ {
+	for i := 0; i < step.Down; i++ {
 		m[0] = keyEscape
 		m[1] = '['
 		m[2] = 'B'
 		m = m[3:]
 	}
-	for i := 0; i < directions.Left; i++ {
+	for i := 0; i < step.Left; i++ {
 		m[0] = keyEscape
 		m[1] = '['
 		m[2] = 'D'
 		m = m[3:]
 	}
-	for i := 0; i < directions.Right; i++ {
+	for i := 0; i < step.Right; i++ {
 		m[0] = keyEscape
 		m[1] = '['
 		m[2] = 'C'
