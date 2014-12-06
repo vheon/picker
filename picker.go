@@ -4,59 +4,99 @@ import (
 	"bufio"
 	"io"
 	"sort"
+	"strings"
 	"sync"
+	"unicode/utf8"
 )
 
+type KeepBottomStack []int
+
+func NewKeepBottomStack(d int) KeepBottomStack {
+	return []int{d}
+}
+
+func (s KeepBottomStack) Peek() int   { return s[len(s)-1] }
+func (s *KeepBottomStack) Push(i int) { (*s) = append((*s), i) }
+func (s *KeepBottomStack) Clear()     { (*s) = (*s)[:1] }
+func (s *KeepBottomStack) Drop() {
+	if len(*s) > 1 {
+		(*s) = (*s)[:len(*s)-1]
+	}
+}
+
 type Picker struct {
-	all    []Candidate
-	valid  int
+	all   []Candidate
+	valid KeepBottomStack
+
 	prompt string
 	query  string
-	view   View
-	blank  View
+
+	index  int
+	height int
+	width  int
+
+	blank []Candidate
+
+	view []string
 }
 
 func NewPicker(prompt string, height, width int, r io.Reader) *Picker {
 	candidates := readAllCandidates(r)
 
-	view := NewView(width, height)
-	view.Fill(candidates)
-
-	blank := NewView(width, height)
-	CopyView(blank, view)
+	blank := make([]Candidate, height)
+	copy(blank, candidates[:min(height, len(candidates))])
 
 	return &Picker{
-		all:    candidates,
-		valid:  len(candidates),
+		all: candidates,
+		// create the stack with the first value in
+		valid: NewKeepBottomStack(len(candidates)),
+
 		prompt: prompt,
 		query:  "",
-		view:   view,
-		blank:  blank,
+
+		index:  0,
+		height: height,
+		width:  width,
+
+		blank: blank,
+
+		view: make([]string, height),
 	}
 }
 
-func (p *Picker) String() string {
-	return p.prompt + p.query + "\n" + p.view.String()
+func cutAt(str string, width int) string {
+	if len(str) > width {
+		return str[:width]
+	}
+	return str
 }
 
-func (cs CandidateSlice) ToChan() <-chan *Candidate {
-	ch := make(chan *Candidate)
-	go func() {
-		for i := range cs {
-			ch <- &cs[i]
+func (p *Picker) View() string {
+	firstLine := p.prompt + p.query + "\n"
+	candidates := p.all
+	if p.query == "" {
+		candidates = p.blank
+	}
+
+	for i := range p.view {
+		if i < len(candidates) && candidates[i].score > 0.0 {
+			p.view[i] = cutAt(candidates[i].value, p.width)
+		} else {
+			p.view[i] = ""
 		}
-		close(ch)
-	}()
-	return ch
+	}
+	p.view[p.index] = TTYReverse(p.view[p.index])
+
+	return firstLine + strings.Join(p.view, "\n")
 }
 
 func (p *Picker) Sort() {
 	if p.query == "" {
-		CopyView(p.view, p.blank)
 		return
 	}
 
-	candidates := p.all[:p.valid]
+	// peek the top from the stack
+	candidates := p.all[:p.valid.Peek()]
 
 	ch := make(chan *Candidate)
 	go func() {
@@ -80,98 +120,46 @@ func (p *Picker) Sort() {
 
 	sort.Sort(CandidateSlice(candidates))
 
-	p.valid = sort.Search(len(candidates), func(i int) bool {
+	// push the value on the stack
+	p.valid.Push(sort.Search(len(candidates), func(i int) bool {
 		return candidates[i].score == 0.0
-	})
-
-	p.view.Fill(p.all[:p.valid])
+	}))
 }
 
-// type View struct {
-// 	Height int
-// 	Query  string
-// 	Rows   []string
-// 	Done   bool
+func (p *Picker) Selected() string {
+	return p.all[p.index].value
+}
 
-// 	index  int
-// 	prompt string
-// }
+func (p *Picker) Up() {
+	if p.index > 0 {
+		p.index -= 1
+	}
+}
 
-// func (v *View) Index() int {
-// 	return v.index
-// }
+func (p *Picker) Down() {
+	if p.index < p.height-1 && p.index < p.valid.Peek()-1 {
+		p.index += 1
+	}
+}
 
-// func (v *View) Selected() string {
-// 	if len(v.Rows)-1 < v.index {
-// 		return ""
-// 	}
-// 	return v.Rows[v.index]
-// }
+func (p *Picker) Backspace() {
+	_, size := utf8.DecodeLastRuneInString(p.query)
+	p.query = p.query[:len(p.query)-size]
 
-// func (v *View) Down() {
-// 	if v.index < len(v.Rows)-1 {
-// 		v.index++
-// 	}
-// }
+	// reset the index
+	p.index = 0
 
-// func (v *View) Up() {
-// 	if v.index > 0 {
-// 		v.index--
-// 	}
-// }
+	// Drop the value of valid candidates on the stack
+	p.valid.Drop()
 
-// func (v *View) ClearPrompt() {
-// 	v.Query = ""
-// 	v.prompt = ""
-// }
+	p.Sort()
+}
 
-// func (v *View) DrawOnTerminal(t *terminal.Terminal) {
-// 	t.HideCursor()
-// 	defer t.ShowCursor()
-
-// 	start_row := t.Height - v.Height - 1
-
-// 	for i, row := range v.toAnsiForm(t) {
-// 		t.WriteToLine(start_row+i, row)
-// 	}
-
-// 	t.MoveTo(start_row, len(v.Query)+len(v.prompt))
-// }
-
-// func (v *View) toAnsiForm(t *terminal.Terminal) []string {
-// 	rows := make([]string, v.Height+1)
-// 	rows[0] = v.prompt + v.Query
-// 	for i, row := range v.Rows {
-// 		rows[i+1] = cutAt(row, t.Width)
-// 	}
-// 	if len(v.Rows) > 0 {
-// 		rows[v.Index()+1] = terminal.AnsiInverted(v.Selected())
-// 	}
-// 	return rows
-// }
-
-// func cutAt(s string, width int) string {
-// 	if len(s) > width {
-// 		return s[:width]
-// 	}
-// 	return s
-// }
-
-// type Picker struct {
-// 	all     []Candidate
-// 	visible int
-// 	blank   *View
-// }
-
-// func NewPicker(candidates []Candidate, visible int) *Picker {
-// 	picker := &Picker{
-// 		all:     candidates,
-// 		visible: visible,
-// 	}
-// 	picker.blank = picker.doAnswer("")
-
-// 	return picker
-// }
+func (p *Picker) Clear() {
+	p.query = ""
+	// Clear the stack except the bottom value
+	p.valid.Clear()
+}
 
 type Candidate struct {
 	value string
@@ -199,51 +187,3 @@ type CandidateSlice []Candidate
 func (cs CandidateSlice) Len() int           { return len(cs) }
 func (cs CandidateSlice) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
 func (cs CandidateSlice) Less(i, j int) bool { return cs[i].score > cs[j].score }
-
-// func (p *Picker) Answer(query string) *View {
-// 	if query == "" {
-// 		return p.blank
-// 	}
-// 	return p.doAnswer(query)
-// }
-
-// func (p *Picker) doAnswer(query string) *View {
-// 	all := make(chan *Candidate)
-// 	go func() {
-// 		for i := range p.all {
-// 			all <- &p.all[i]
-// 		}
-// 		close(all)
-// 	}()
-
-// 	var wg sync.WaitGroup
-// 	for i := 0; i < 64; i++ {
-// 		wg.Add(1)
-// 		go func() {
-// 			for c := range all {
-// 				c.score = Score(c.value, query)
-// 			}
-// 			wg.Done()
-// 		}()
-// 	}
-// 	wg.Wait()
-
-// 	sort.Sort(CandidateSlice(p.all))
-
-// 	lines := []string{}
-// 	for i, c := range p.all {
-// 		if c.score == 0.0 || i >= p.visible {
-// 			break
-// 		}
-// 		lines = append(lines, c.value)
-// 	}
-
-// 	return &View{
-// 		Height: p.visible,
-// 		Rows:   lines,
-// 		Query:  query,
-// 		Done:   false,
-// 		index:  0,
-// 		prompt: "> ",
-// 	}
-// }
