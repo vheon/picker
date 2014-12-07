@@ -115,13 +115,7 @@ func main() {
 	prompt := "> "
 	picker := NewPicker(prompt, visible, width, os.Stdin)
 
-	in := make(chan rune)
-	quit := make(chan struct{})
-	selection := make(chan struct{})
-	back := make(chan struct{})
-	clear := make(chan struct{})
-	down := make(chan struct{})
-	up := make(chan struct{})
+	input := make(chan rune)
 	go func() {
 		reader := bufio.NewReader(tty)
 		for {
@@ -129,30 +123,9 @@ func main() {
 			if err != nil {
 				break
 			}
-			switch r {
-			case keyEscape, keyCtrlC:
-				quit <- struct{}{}
-			case keyEnter:
-				selection <- struct{}{}
-			case keyBackspace:
-				back <- struct{}{}
-			case keyCtrlU, keyCtrlW:
-				clear <- struct{}{}
-			case keyCtrlN, keyDown:
-				down <- struct{}{}
-			case keyCtrlP, keyUp:
-				up <- struct{}{}
-			default:
-				in <- r
-			}
+			input <- r
 		}
-		close(in)
-		close(quit)
-		close(selection)
-		close(back)
-		close(clear)
-		close(down)
-		close(up)
+		close(input)
 	}()
 
 	if *vim {
@@ -189,28 +162,27 @@ func main() {
 		Right: len(picker.prompt) + len(picker.query),
 	}))
 
-	for {
-		select {
-		case r := <-in:
-			picker.AppendToQuery(r)
-			picker.Sort()
-		case <-back:
-			picker.Backspace()
-			picker.Sort()
-		case <-clear:
-			picker.Clear()
-		case <-quit:
+	for r := range input {
+		switch r {
+		case keyEscape, keyCtrlC:
 			tty.Write(RestoreCursorPosition)
 			os.Exit(1)
-		case <-selection:
+		case keyEnter:
 			tty.Write(RestoreCursorPosition)
 			fmt.Println(picker.Selected())
 			return
-		case <-down:
+		case keyBackspace:
+			picker.Backspace()
+			picker.Sort()
+		case keyCtrlU, keyCtrlW:
+			picker.Clear()
+		case keyCtrlN, keyDown:
 			picker.Down()
-
-		case <-up:
+		case keyCtrlP, keyUp:
 			picker.Up()
+		default:
+			picker.AppendToQuery(r)
+			picker.Sort()
 		}
 
 		// go to the stored position
