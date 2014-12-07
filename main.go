@@ -2,14 +2,13 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"runtime"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
-
-const VisibleCandidates int = 20
 
 const (
 	keyCtrlC     = 3
@@ -100,8 +99,14 @@ func min(a, b int) int {
 	return b
 }
 
+var (
+	VisibleCandidates = flag.Int("v", 20, "Number of visible candidates")
+	vim               = flag.Bool("vim", false, "Print at bottom of screen")
+)
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	flag.Parse()
 
 	tty, err := OpenTTY()
 	if err != nil {
@@ -118,7 +123,7 @@ func main() {
 		panic(err)
 	}
 
-	visible := min(VisibleCandidates, height)
+	visible := min(*VisibleCandidates, height)
 	prompt := "> "
 	picker := NewPicker(prompt, visible, width, os.Stdin)
 
@@ -162,13 +167,23 @@ func main() {
 		close(up)
 	}()
 
+	if *vim {
+		// start from the bottom of the screen
+		tty.WriteString(move(steps{
+			Up:    0,
+			Left:  width,
+			Right: 0,
+			Down:  height,
+		}))
+	}
+
 	// write the first view
 	tty.WriteString(picker.View())
 
 	// go to the start of the first line
-	lastLineIndex := min(VisibleCandidates, len(picker.all))
+	lastLineIndex := min(*VisibleCandidates, len(picker.all))
 	tty.WriteString(move(steps{
-		Up:    VisibleCandidates,
+		Up:    *VisibleCandidates,
 		Down:  0,
 		Left:  len(picker.all[lastLineIndex-1].value),
 		Right: 0,
