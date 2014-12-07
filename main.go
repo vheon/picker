@@ -183,6 +183,7 @@ func main() {
 		default:
 			picker.AppendToQuery(r)
 			picker.Sort()
+			picker.UpdateValid()
 		}
 
 		// go to the stored position

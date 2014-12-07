@@ -9,24 +9,21 @@ import (
 	"unicode/utf8"
 )
 
-type KeepBottomStack []int
+type Stack []int
 
-func NewKeepBottomStack(d int) KeepBottomStack {
-	return []int{d}
-}
-
-func (s KeepBottomStack) Peek() int   { return s[len(s)-1] }
-func (s *KeepBottomStack) Push(i int) { (*s) = append((*s), i) }
-func (s *KeepBottomStack) Clear()     { (*s) = (*s)[:1] }
-func (s *KeepBottomStack) Drop() {
+func (s *Stack) Empty() bool       { return len(*s) == 0 }
+func (s *Stack) Peek() int         { return (*s)[len(*s)-1] }
+func (s *Stack) Push(i int)        { (*s) = append((*s), i) }
+func (s *Stack) ClearUntilBottom() { (*s) = (*s)[:1] }
+func (s *Stack) DropExceptBottom() {
 	if len(*s) > 1 {
 		(*s) = (*s)[:len(*s)-1]
 	}
 }
 
 type Picker struct {
-	all   []Candidate
-	valid KeepBottomStack
+	all       []Candidate
+	validSize Stack
 
 	prompt string
 	query  string
@@ -49,7 +46,7 @@ func NewPicker(prompt string, height, width int, r io.Reader) *Picker {
 	return &Picker{
 		all: candidates,
 		// create the stack with the first value in
-		valid: NewKeepBottomStack(len(candidates)),
+		validSize: Stack([]int{len(candidates)}),
 
 		prompt: prompt,
 		query:  "",
@@ -96,7 +93,7 @@ func (p *Picker) Sort() {
 	}
 
 	// peek the top from the stack
-	candidates := p.all[:p.valid.Peek()]
+	candidates := p.all[:p.validSize.Peek()]
 
 	ch := make(chan *Candidate)
 	go func() {
@@ -119,10 +116,12 @@ func (p *Picker) Sort() {
 	wg.Wait()
 
 	sort.Sort(CandidateSlice(candidates))
+}
 
+func (p *Picker) UpdateValid() {
 	// push the value on the stack
-	p.valid.Push(sort.Search(len(candidates), func(i int) bool {
-		return candidates[i].score == 0.0
+	p.validSize.Push(sort.Search(p.validSize.Peek(), func(i int) bool {
+		return p.all[i].score == 0.0
 	}))
 }
 
@@ -137,7 +136,7 @@ func (p *Picker) Up() {
 }
 
 func (p *Picker) Down() {
-	if p.index < p.height-1 && p.index < p.valid.Peek()-1 {
+	if p.index < p.height-1 && p.index < p.validSize.Peek()-1 {
 		p.index += 1
 	}
 }
@@ -155,13 +154,13 @@ func (p *Picker) Backspace() {
 	p.index = 0
 
 	// Drop the value of valid candidates on the stack
-	p.valid.Drop()
+	p.validSize.DropExceptBottom()
 }
 
 func (p *Picker) Clear() {
 	p.query = ""
 	// Clear the stack except the bottom value
-	p.valid.Clear()
+	p.validSize.ClearUntilBottom()
 }
 
 type Candidate struct {
