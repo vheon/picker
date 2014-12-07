@@ -142,6 +142,11 @@ func (p *Picker) Down() {
 	}
 }
 
+func (p *Picker) AppendToQuery(r rune) {
+	p.query += string(r)
+	p.index = 0
+}
+
 func (p *Picker) Backspace() {
 	_, size := utf8.DecodeLastRuneInString(p.query)
 	p.query = p.query[:len(p.query)-size]

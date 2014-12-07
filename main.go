@@ -192,11 +192,11 @@ func main() {
 	for {
 		select {
 		case r := <-in:
-			picker.query += string(r)
-			picker.index = 0
+			picker.AppendToQuery(r)
 			picker.Sort()
 		case <-back:
 			picker.Backspace()
+			picker.Sort()
 		case <-clear:
 			picker.Clear()
 		case <-quit:
