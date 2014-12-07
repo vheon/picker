@@ -76,18 +76,6 @@ func OpenTTY() (*os.File, error) {
 	return os.OpenFile("/dev/tty", os.O_RDWR, 0)
 }
 
-func MakeRaw(tty *os.File) (*terminal.State, error) {
-	return terminal.MakeRaw(int(tty.Fd()))
-}
-
-func Restore(tty *os.File, state *terminal.State) error {
-	return terminal.Restore(int(tty.Fd()), state)
-}
-
-func GetSize(tty *os.File) (int, int, error) {
-	return terminal.GetSize(int(tty.Fd()))
-}
-
 func TTYReverse(str string) string {
 	return ReverseColor + str + ResetColor
 }
@@ -112,13 +100,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	originalState, err := MakeRaw(tty)
+	originalState, err := terminal.MakeRaw(int(tty.Fd()))
 	if err != nil {
 		panic(err)
 	}
-	defer Restore(tty, originalState)
+	defer terminal.Restore(int(tty.Fd()), originalState)
 
-	width, height, err := GetSize(tty)
+	width, height, err := terminal.GetSize(int(tty.Fd()))
 	if err != nil {
 		panic(err)
 	}
