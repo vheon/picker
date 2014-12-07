@@ -70,6 +70,8 @@ var (
 
 	ReverseColor = string([]rune{keyEscape, '[', '7', 'm'})
 	ResetColor   = string([]rune{keyEscape, '[', '0', 'm'})
+
+	ShowCursor = string([]rune{keyEscape, '[', '?', '2', '5', 'h'})
 )
 
 func OpenTTY() (*os.File, error) {
@@ -163,6 +165,7 @@ func main() {
 			Right: 0,
 			Down:  height,
 		}))
+		tty.WriteString(ShowCursor)
 	}
 
 	// write the first view
