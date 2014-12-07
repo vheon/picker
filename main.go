@@ -31,9 +31,9 @@ type steps struct {
 	Right int
 }
 
-func move(step steps) string {
+func move(step steps) []byte {
 	count := step.Down + step.Up + step.Left + step.Right
-	movement := make([]rune, 3*(count))
+	movement := make([]byte, 3*(count))
 	m := movement
 	for i := 0; i < step.Up; i++ {
 		m[0] = keyEscape
@@ -60,18 +60,16 @@ func move(step steps) string {
 		m = m[3:]
 	}
 
-	return string(movement)
+	return movement
 }
 
 var (
-	SaveCursorPosition    = string([]rune{keyEscape, '[', 's'})
-	RestoreCursorPosition = string([]rune{keyEscape, '[', 'u'})
-	EraseDisplay          = string([]rune{keyEscape, '[', 'J'})
-
-	ReverseColor = string([]rune{keyEscape, '[', '7', 'm'})
-	ResetColor   = string([]rune{keyEscape, '[', '0', 'm'})
-
-	ShowCursor = string([]rune{keyEscape, '[', '?', '2', '5', 'h'})
+	SaveCursorPosition    = []byte{keyEscape, '[', 's'}
+	RestoreCursorPosition = []byte{keyEscape, '[', 'u'}
+	EraseDisplay          = []byte{keyEscape, '[', 'J'}
+	ReverseColor          = []byte{keyEscape, '[', '7', 'm'}
+	ResetColor            = []byte{keyEscape, '[', '0', 'm'}
+	ShowCursor            = []byte{keyEscape, '[', '?', '2', '5', 'h'}
 )
 
 func OpenTTY() (*os.File, error) {
@@ -79,7 +77,7 @@ func OpenTTY() (*os.File, error) {
 }
 
 func TTYReverse(str string) string {
-	return ReverseColor + str + ResetColor
+	return string(ReverseColor) + str + string(ResetColor)
 }
 
 func min(a, b int) int {
@@ -159,13 +157,13 @@ func main() {
 
 	if *vim {
 		// start from the bottom of the screen
-		tty.WriteString(move(steps{
+		tty.Write(move(steps{
 			Up:    0,
 			Left:  width,
 			Right: 0,
 			Down:  height,
 		}))
-		tty.WriteString(ShowCursor)
+		tty.Write(ShowCursor)
 	}
 
 	// write the first view
@@ -173,7 +171,7 @@ func main() {
 
 	// go to the start of the first line
 	lastLineIndex := min(*VisibleCandidates, len(picker.all))
-	tty.WriteString(move(steps{
+	tty.Write(move(steps{
 		Up:    *VisibleCandidates,
 		Down:  0,
 		Left:  len(picker.all[lastLineIndex-1].value),
@@ -181,10 +179,10 @@ func main() {
 	}))
 
 	// save the pos
-	tty.WriteString(SaveCursorPosition)
+	tty.Write(SaveCursorPosition)
 
 	// focus on the right spot in the prompt
-	tty.WriteString(move(steps{
+	tty.Write(move(steps{
 		Up:    0,
 		Down:  0,
 		Left:  0,
@@ -202,10 +200,10 @@ func main() {
 		case <-clear:
 			picker.Clear()
 		case <-quit:
-			tty.WriteString(RestoreCursorPosition)
+			tty.Write(RestoreCursorPosition)
 			os.Exit(1)
 		case <-selection:
-			tty.WriteString(RestoreCursorPosition)
+			tty.Write(RestoreCursorPosition)
 			fmt.Println(picker.Selected())
 			return
 		case <-down:
@@ -216,14 +214,14 @@ func main() {
 		}
 
 		// go to the stored position
-		tty.WriteString(RestoreCursorPosition)
+		tty.Write(RestoreCursorPosition)
 		// clear the screen
-		tty.WriteString(EraseDisplay)
+		tty.Write(EraseDisplay)
 		// write what we should see
 		tty.WriteString(picker.View())
 		// move the cursor to the right prompt position
-		tty.WriteString(RestoreCursorPosition)
-		tty.WriteString(move(steps{
+		tty.Write(RestoreCursorPosition)
+		tty.Write(move(steps{
 			Up:    0,
 			Down:  0,
 			Left:  0,
