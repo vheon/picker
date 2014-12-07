@@ -156,8 +156,6 @@ func (p *Picker) Backspace() {
 
 	// Drop the value of valid candidates on the stack
 	p.valid.Drop()
-
-	p.Sort()
 }
 
 func (p *Picker) Clear() {
