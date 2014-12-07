@@ -64,12 +64,12 @@ func move(step steps) string {
 }
 
 var (
-	SaveCursorPosition    string = string([]rune{keyEscape, '[', 's'})
-	RestoreCursorPosition string = string([]rune{keyEscape, '[', 'u'})
-	EraseDisplay          string = string([]rune{keyEscape, '[', 'J'})
+	SaveCursorPosition    = string([]rune{keyEscape, '[', 's'})
+	RestoreCursorPosition = string([]rune{keyEscape, '[', 'u'})
+	EraseDisplay          = string([]rune{keyEscape, '[', 'J'})
 
-	ReverseColor string = string([]rune{keyEscape, '[', '7', 'm'})
-	ResetColor   string = string([]rune{keyEscape, '[', '0', 'm'})
+	ReverseColor = string([]rune{keyEscape, '[', '7', 'm'})
+	ResetColor   = string([]rune{keyEscape, '[', '0', 'm'})
 )
 
 func OpenTTY() (*os.File, error) {
