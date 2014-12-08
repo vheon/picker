@@ -9,7 +9,7 @@ func TestScore(t *testing.T) {
 	var absTests = []struct {
 		candidate string
 		query     string
-		wanted    float64
+		wanted    float32
 	}{
 		{candidate: "a", query: "", wanted: 1.0},
 		{candidate: "a", query: "aa", wanted: 0.0},
@@ -31,7 +31,7 @@ func TestScore(t *testing.T) {
 	var greaterTests = []struct {
 		candidate string
 		query     string
-		lower     float64
+		lower     float32
 	}{
 		{candidate: "abcx", query: "abc", lower: 0.0},
 		{candidate: "abcx", query: "abc", lower: 0.0},
