@@ -115,19 +115,6 @@ func main() {
 	prompt := "> "
 	picker := NewPicker(prompt, visible, width, os.Stdin)
 
-	input := make(chan rune)
-	go func() {
-		reader := bufio.NewReader(tty)
-		for {
-			r, _, err := reader.ReadRune()
-			if err != nil {
-				break
-			}
-			input <- r
-		}
-		close(input)
-	}()
-
 	if *vim {
 		// start from the bottom of the screen
 		tty.Write(move(steps{
@@ -162,7 +149,13 @@ func main() {
 		Right: len(picker.prompt) + len(picker.query),
 	}))
 
-	for r := range input {
+	reader := bufio.NewReader(tty)
+	for {
+		r, _, err := reader.ReadRune()
+		if err != nil {
+			break
+		}
+
 		switch r {
 		case keyEscape, keyCtrlC:
 			tty.Write(RestoreCursorPosition)
