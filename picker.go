@@ -118,13 +118,6 @@ func (p *Picker) Sort() {
 	sort.Sort(CandidateSlice(candidates))
 }
 
-func (p *Picker) UpdateValid() {
-	// push the value on the stack
-	p.validSize.Push(sort.Search(p.validSize.Peek(), func(i int) bool {
-		return p.all[i].score == 0.0
-	}))
-}
-
 func (p *Picker) Selected() string {
 	return p.all[p.index].value
 }
@@ -141,12 +134,19 @@ func (p *Picker) Down() {
 	}
 }
 
-func (p *Picker) AppendToQuery(r rune) {
+func (p *Picker) More(r rune) {
 	p.query += string(r)
 	p.index = 0
+
+	p.Sort()
+
+	// push the value on the stack
+	p.validSize.Push(sort.Search(p.validSize.Peek(), func(i int) bool {
+		return p.all[i].score == 0.0
+	}))
 }
 
-func (p *Picker) Backspace() {
+func (p *Picker) Back() {
 	_, size := utf8.DecodeLastRuneInString(p.query)
 	p.query = p.query[:len(p.query)-size]
 
@@ -155,6 +155,8 @@ func (p *Picker) Backspace() {
 
 	// Drop the value of valid candidates on the stack
 	p.validSize.DropExceptBottom()
+
+	p.Sort()
 }
 
 func (p *Picker) Clear() {

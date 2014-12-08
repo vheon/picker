@@ -164,19 +164,16 @@ func main() {
 			tty.Write(RestoreCursorPosition)
 			fmt.Println(picker.Selected())
 			return
-		case keyBackspace:
-			picker.Backspace()
-			picker.Sort()
 		case keyCtrlU, keyCtrlW:
 			picker.Clear()
 		case keyCtrlN, keyDown:
 			picker.Down()
 		case keyCtrlP, keyUp:
 			picker.Up()
+		case keyBackspace:
+			picker.Back()
 		default:
-			picker.AppendToQuery(r)
-			picker.Sort()
-			picker.UpdateValid()
+			picker.More(r)
 		}
 
 		// go to the stored position
