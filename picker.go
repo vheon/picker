@@ -165,7 +165,7 @@ func (p *Picker) Clear() {
 
 type Candidate struct {
 	value string
-	score float64
+	score float32
 }
 
 func NewCandidate(s string) Candidate {

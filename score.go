@@ -57,7 +57,7 @@ func bestMatch(ms []Match) Match {
 	return best
 }
 
-func Score(candidate, query string) float64 {
+func Score(candidate, query string) float32 {
 	if len(query) == 0 {
 		return 1.0
 	}
@@ -84,10 +84,10 @@ func Score(candidate, query string) float64 {
 		return 0.0
 	}
 
-	var score float64
-	score = float64(bestMatch(matches).Length())
-	score = float64(len(query)) / score
-	score = score / float64(len(candidate))
+	var score float32
+	score = float32(bestMatch(matches).Length())
+	score = float32(len(query)) / score
+	score = score / float32(len(candidate))
 
 	return score
 }
