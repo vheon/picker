@@ -88,12 +88,14 @@ func min(a, b int) int {
 }
 
 var (
-	VisibleCandidates = flag.Int("v", 20, "Number of visible candidates")
-	vim               = flag.Bool("vim", false, "Print at bottom of screen")
+	visible int
+	vim     bool
 )
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	flag.IntVar(&visible, "v", 20, "Number of visible candidates")
+	flag.BoolVar(&vim, "vim", false, "Print at bottom of screen")
 	flag.Parse()
 
 	tty, err := OpenTTY()
@@ -111,11 +113,13 @@ func main() {
 		panic(err)
 	}
 
-	visible := min(*VisibleCandidates, height)
-	prompt := "> "
-	picker := NewPicker(prompt, visible, width, os.Stdin)
+	if height < visible {
+		visible = height
+	}
 
-	if *vim {
+	picker := NewPicker("> ", visible, width, os.Stdin)
+
+	if vim {
 		// start from the bottom of the screen
 		tty.Write(move(steps{
 			Up:    0,
@@ -129,12 +133,12 @@ func main() {
 	// write the first view
 	tty.WriteString(picker.View())
 
-	// go to the start of the first line
-	lastLineIndex := min(*VisibleCandidates, len(picker.all))
+	// going width time to the left is more than necessary but it works in all
+	// situations and is simpler
 	tty.Write(move(steps{
-		Up:    *VisibleCandidates,
+		Up:    visible,
 		Down:  0,
-		Left:  len(picker.all[lastLineIndex-1].value),
+		Left:  width,
 		Right: 0,
 	}))
 
