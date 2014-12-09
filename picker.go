@@ -21,6 +21,7 @@ func (s *Stack) DropExceptBottom() {
 }
 
 type Picker struct {
+	originals []Candidate
 	all       []Candidate
 	validSize Stack
 
@@ -30,8 +31,6 @@ type Picker struct {
 	index  int
 	height int
 	width  int
-
-	blank []Candidate
 
 	view []string
 }
@@ -54,7 +53,7 @@ func NewPicker(prompt string, height, width int, r io.Reader) *Picker {
 		height: height,
 		width:  width,
 
-		blank: blank,
+		originals: blank,
 
 		view: make([]string, height),
 	}
@@ -71,7 +70,7 @@ func (p *Picker) View() string {
 	firstLine := p.prompt + p.query + "\n"
 	candidates := p.all
 	if p.query == "" {
-		candidates = p.blank
+		candidates = p.originals
 	}
 
 	for i := range p.view {
