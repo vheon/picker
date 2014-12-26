@@ -153,17 +153,21 @@ func main() {
 		Right: len(picker.prompt) + len(picker.query),
 	}))
 
-	reader := bufio.NewReader(tty)
-	for {
-		r, _, err := reader.ReadRune()
-		if err != nil {
-			break
+	input := make(chan rune)
+	go func() {
+		reader := bufio.NewReader(tty)
+		for {
+			r, _, err := reader.ReadRune()
+			if err != nil || r == keyEscape || r == keyCtrlC {
+				tty.Write(RestoreCursorPosition)
+				os.Exit(1)
+			}
+			input <- r
 		}
+	}()
 
+	for r := range input {
 		switch r {
-		case keyEscape, keyCtrlC:
-			tty.Write(RestoreCursorPosition)
-			os.Exit(1)
 		case keyEnter:
 			tty.Write(RestoreCursorPosition)
 			fmt.Println(picker.Selected())
