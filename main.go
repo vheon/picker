@@ -24,6 +24,29 @@ const (
 	keyBackspace = 127
 )
 
+var (
+	SaveCursorPosition     = []byte{keyEscape, '[', 's'}
+	RestoreCursorPosition  = []byte{keyEscape, '[', 'u'}
+	EraseDisplayFromCursor = []byte{keyEscape, '[', 'J'}
+	ReverseColor           = []byte{keyEscape, '[', '7', 'm'}
+	ResetColor             = []byte{keyEscape, '[', '0', 'm'}
+	ShowCursor             = []byte{keyEscape, '[', '?', '2', '5', 'h'}
+)
+
+type TTY struct {
+	*os.File
+}
+
+func OpenTTY() (*TTY, error) {
+	file, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
+	tty := TTY{file}
+	return &tty, err
+}
+
+func (tty *TTY) Fd() int {
+	return int(tty.File.Fd())
+}
+
 type steps struct {
 	Up    int
 	Down  int
@@ -31,7 +54,7 @@ type steps struct {
 	Right int
 }
 
-func move(step steps) []byte {
+func (tty *TTY) moveCursor(step steps) {
 	count := step.Down + step.Up + step.Left + step.Right
 	movement := make([]byte, 3*(count))
 	m := movement
@@ -60,20 +83,23 @@ func move(step steps) []byte {
 		m = m[3:]
 	}
 
-	return movement
+	tty.Write(movement)
 }
 
-var (
-	SaveCursorPosition    = []byte{keyEscape, '[', 's'}
-	RestoreCursorPosition = []byte{keyEscape, '[', 'u'}
-	EraseDisplay          = []byte{keyEscape, '[', 'J'}
-	ReverseColor          = []byte{keyEscape, '[', '7', 'm'}
-	ResetColor            = []byte{keyEscape, '[', '0', 'm'}
-	ShowCursor            = []byte{keyEscape, '[', '?', '2', '5', 'h'}
-)
+func (tty *TTY) showCursor() {
+	tty.Write(ShowCursor)
+}
 
-func OpenTTY() (*os.File, error) {
-	return os.OpenFile("/dev/tty", os.O_RDWR, 0)
+func (tty *TTY) saveCursorPosition() {
+	tty.Write(SaveCursorPosition)
+}
+
+func (tty *TTY) restoreCursorPosition() {
+	tty.Write(RestoreCursorPosition)
+}
+
+func (tty *TTY) eraseDisplayFromCursor() {
+	tty.Write(EraseDisplayFromCursor)
 }
 
 func TTYReverse(str string) string {
@@ -102,13 +128,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	originalState, err := terminal.MakeRaw(int(tty.Fd()))
+	originalState, err := terminal.MakeRaw(tty.Fd())
 	if err != nil {
 		panic(err)
 	}
-	defer terminal.Restore(int(tty.Fd()), originalState)
+	defer terminal.Restore(tty.Fd(), originalState)
 
-	width, height, err := terminal.GetSize(int(tty.Fd()))
+	width, height, err := terminal.GetSize(tty.Fd())
 	if err != nil {
 		panic(err)
 	}
@@ -121,13 +147,13 @@ func main() {
 
 	if vim {
 		// start from the bottom of the screen
-		tty.Write(move(steps{
+		tty.moveCursor(steps{
 			Up:    0,
 			Left:  width,
 			Right: 0,
 			Down:  height,
-		}))
-		tty.Write(ShowCursor)
+		})
+		tty.showCursor()
 	}
 
 	// write the first view
@@ -135,23 +161,23 @@ func main() {
 
 	// going width time to the left is more than necessary but it works in all
 	// situations and is simpler
-	tty.Write(move(steps{
+	tty.moveCursor(steps{
 		Up:    visible,
 		Down:  0,
 		Left:  width,
 		Right: 0,
-	}))
+	})
 
 	// save the pos
-	tty.Write(SaveCursorPosition)
+	tty.saveCursorPosition()
 
 	// focus on the right spot in the prompt
-	tty.Write(move(steps{
+	tty.moveCursor(steps{
 		Up:    0,
 		Down:  0,
 		Left:  0,
 		Right: len(picker.prompt) + len(picker.query),
-	}))
+	})
 
 	input := make(chan rune)
 	go func() {
@@ -159,7 +185,7 @@ func main() {
 		for {
 			r, _, err := reader.ReadRune()
 			if err != nil || r == keyEscape || r == keyCtrlC {
-				tty.Write(RestoreCursorPosition)
+				tty.restoreCursorPosition()
 				os.Exit(1)
 			}
 			input <- r
@@ -169,7 +195,7 @@ func main() {
 	for r := range input {
 		switch r {
 		case keyEnter:
-			tty.Write(RestoreCursorPosition)
+			tty.restoreCursorPosition()
 			fmt.Println(picker.Selected())
 			return
 		case keyCtrlU, keyCtrlW:
@@ -184,19 +210,19 @@ func main() {
 			picker.More(r)
 		}
 
-		// go to the stored position
-		tty.Write(RestoreCursorPosition)
-		// clear the screen
-		tty.Write(EraseDisplay)
+		tty.restoreCursorPosition()
+		tty.eraseDisplayFromCursor()
+
 		// write what we should see
 		tty.WriteString(picker.View())
+
 		// move the cursor to the right prompt position
-		tty.Write(RestoreCursorPosition)
-		tty.Write(move(steps{
+		tty.restoreCursorPosition()
+		tty.moveCursor(steps{
 			Up:    0,
 			Down:  0,
 			Left:  0,
 			Right: len(picker.prompt) + len(picker.query),
-		}))
+		})
 	}
 }
