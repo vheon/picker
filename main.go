@@ -148,10 +148,8 @@ func main() {
 	if vim {
 		// start from the bottom of the screen
 		tty.moveCursor(steps{
-			Up:    0,
-			Left:  width,
-			Right: 0,
-			Down:  height,
+			Left: width,
+			Down: height,
 		})
 		tty.showCursor()
 	}
@@ -162,10 +160,8 @@ func main() {
 	// going width time to the left is more than necessary but it works in all
 	// situations and is simpler
 	tty.moveCursor(steps{
-		Up:    visible,
-		Down:  0,
-		Left:  width,
-		Right: 0,
+		Up:   visible,
+		Left: width,
 	})
 
 	// save the pos
@@ -173,9 +169,6 @@ func main() {
 
 	// focus on the right spot in the prompt
 	tty.moveCursor(steps{
-		Up:    0,
-		Down:  0,
-		Left:  0,
 		Right: len(picker.prompt) + len(picker.query),
 	})
 
@@ -219,9 +212,6 @@ func main() {
 		// move the cursor to the right prompt position
 		tty.restoreCursorPosition()
 		tty.moveCursor(steps{
-			Up:    0,
-			Down:  0,
-			Left:  0,
 			Right: len(picker.prompt) + len(picker.query),
 		})
 	}
