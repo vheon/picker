@@ -102,6 +102,13 @@ func (tty *TTY) eraseDisplayFromCursor() {
 	tty.Write(EraseDisplayFromCursor)
 }
 
+func (tty *TTY) focusWritingPoint(picker *Picker) {
+	tty.restoreCursorPosition()
+	tty.moveCursor(steps{
+		Right: len(picker.prompt) + len(picker.query),
+	})
+}
+
 func TTYReverse(str string) string {
 	return string(ReverseColor) + str + string(ResetColor)
 }
@@ -167,10 +174,7 @@ func main() {
 	// save the pos
 	tty.saveCursorPosition()
 
-	// focus on the right spot in the prompt
-	tty.moveCursor(steps{
-		Right: len(picker.prompt) + len(picker.query),
-	})
+	tty.focusWritingPoint(picker)
 
 	input := make(chan rune)
 	go func() {
@@ -209,10 +213,6 @@ func main() {
 		// write what we should see
 		tty.WriteString(picker.View())
 
-		// move the cursor to the right prompt position
-		tty.restoreCursorPosition()
-		tty.moveCursor(steps{
-			Right: len(picker.prompt) + len(picker.query),
-		})
+		tty.focusWritingPoint(picker)
 	}
 }
