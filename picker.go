@@ -66,6 +66,10 @@ func cutAt(str string, width int) string {
 	return str
 }
 
+func TTYReverse(str string) string {
+	return string(ReverseColor) + str + string(ResetColor)
+}
+
 func (p *Picker) View() string {
 	firstLine := p.prompt + p.query + "\n"
 	candidates := p.all

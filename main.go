@@ -109,10 +109,6 @@ func (tty *TTY) focusWritingPoint(picker *Picker) {
 	})
 }
 
-func TTYReverse(str string) string {
-	return string(ReverseColor) + str + string(ResetColor)
-}
-
 func min(a, b int) int {
 	if a < b {
 		return a
