@@ -3,17 +3,42 @@ package main
 import (
 	"bufio"
 	"io"
+	"unicode"
+	"unicode/utf8"
 )
 
 type Candidate struct {
-	value string
-	score float32
+	value      string
+	boundaries []rune
+	score      float32
+}
+
+func FindBoundaries(s string) []rune {
+	var res []rune
+
+	first, size := utf8.DecodeRuneInString(s)
+	if !unicode.IsPunct(first) {
+		res = append(res, first)
+	}
+
+	prev := first
+	for _, r := range s[size:] {
+		is_good_uppercase := unicode.IsUpper(r) && !unicode.IsUpper(prev)
+		is_alpha_after_punctuation := unicode.IsPunct(prev) && unicode.In(r, unicode.Number, unicode.Letter)
+
+		if is_good_uppercase || is_alpha_after_punctuation {
+			res = append(res, r)
+		}
+		prev = r
+	}
+	return res
 }
 
 func NewCandidate(s string) Candidate {
 	return Candidate{
-		value: s,
-		score: 1.0,
+		value:      s,
+		boundaries: FindBoundaries(s),
+		score:      1.0,
 	}
 }
 

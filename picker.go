@@ -128,7 +128,7 @@ func (p *Picker) Sort() {
 		wg.Add(1)
 		go func() {
 			for c := range ch {
-				c.score = Score(c.value, p.query)
+				c.score = Score(c, p.query)
 			}
 			wg.Done()
 		}()

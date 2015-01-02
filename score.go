@@ -57,7 +57,7 @@ func bestMatch(ms []Match) Match {
 	return best
 }
 
-func Score(candidate, query string) float32 {
+func ScoreString(candidate, query string) float32 {
 	if len(query) == 0 {
 		return 1.0
 	}
@@ -90,4 +90,12 @@ func Score(candidate, query string) float32 {
 	score = score / float32(len(candidate))
 
 	return score
+}
+
+func Score(candidate *Candidate, query string) float32 {
+	wbScore := ScoreString(string(candidate.boundaries), query)
+	if wbScore > 0.0 {
+		return wbScore
+	}
+	return ScoreString(candidate.value, query)
 }
