@@ -113,13 +113,11 @@ func TestScore(t *testing.T) {
 		s1 := Score(&test.candidate1, test.query1)
 		s2 := Score(&test.candidate2, test.query2)
 		if s1 >= s2 {
-			t.Errorf("Score(%q, %q)[%q] >= Score(%q, %q)[%q], wanted <",
+			t.Errorf("Score(%q, %q) >= Score(%q, %q), wanted <",
 				test.candidate1,
 				test.query1,
-				s1,
 				test.candidate2,
-				test.query2,
-				s2)
+				test.query2)
 
 		}
 
