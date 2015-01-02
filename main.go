@@ -103,8 +103,6 @@ func (tty *TTY) EraseDisplayFromCursor() {
 }
 
 // XXX: The renderer work is still spread across the file.
-// XXX: The renderer is still buggy when dealing with lots of candidates.
-// Possibly a problem of sincronization.
 type Renderer struct {
 	tty     *TTY
 	width   int
@@ -121,16 +119,16 @@ func (r *Renderer) PrepareForTerminalVim() {
 	r.tty.ShowCursor()
 }
 
-func (r *Renderer) focusWritingPoint(picker *Picker) {
+func (r *Renderer) focusWritingPoint(view *PickerView) {
 	r.tty.RestoreCursorPosition()
 	r.tty.moveCursor(steps{
-		Right: len(picker.prompt) + len(picker.query),
+		Right: len(view.firstLine),
 	})
 }
 
-func (r *Renderer) renderFirstFrame(picker *Picker) {
+func (r *Renderer) renderFirstFrame(view *PickerView) {
 	// write the first view
-	r.tty.WriteString(picker.View())
+	r.tty.WriteString(view.String())
 
 	// going width time to the left is more than necessary but it works in all
 	// situations and is simpler
@@ -142,22 +140,22 @@ func (r *Renderer) renderFirstFrame(picker *Picker) {
 	// save the pos
 	r.tty.SaveCursorPosition()
 
-	r.focusWritingPoint(picker)
+	r.focusWritingPoint(view)
 }
 
-func (r *Renderer) Start(channel chan *Picker) {
+func (r *Renderer) Start(channel chan *PickerView) {
 	// we special case the first picker to render since we have to save a
 	// position for later uses
 	r.renderFirstFrame(<-channel)
 
-	for picker := range channel {
+	for view := range channel {
 		r.tty.RestoreCursorPosition()
 		r.tty.EraseDisplayFromCursor()
 
 		// write what we should see
-		r.tty.WriteString(picker.View())
+		r.tty.WriteString(view.firstLine + "\n" + view.lines)
 
-		r.focusWritingPoint(picker)
+		r.focusWritingPoint(view)
 	}
 }
 
@@ -198,7 +196,7 @@ func main() {
 		visible = height
 	}
 
-	renderChan := make(chan *Picker)
+	renderChan := make(chan *PickerView)
 	renderer := &Renderer{
 		tty:     tty,
 		height:  height,

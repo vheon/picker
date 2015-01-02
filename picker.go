@@ -20,6 +20,15 @@ func (s *Stack) DropExceptBottom() {
 	}
 }
 
+type PickerView struct {
+	firstLine string
+	lines     string
+}
+
+func (pv *PickerView) String() string {
+	return pv.firstLine + "\n" + pv.lines
+}
+
 type Picker struct {
 	originals []Candidate
 	all       []Candidate
@@ -34,10 +43,10 @@ type Picker struct {
 
 	view []string
 
-	render chan *Picker
+	render chan *PickerView
 }
 
-func NewPicker(prompt string, height, width int, r io.Reader, renderChan chan *Picker) *Picker {
+func NewPicker(prompt string, height, width int, r io.Reader, renderChan chan *PickerView) *Picker {
 	candidates := readAllCandidates(r)
 
 	blank := make([]Candidate, height)
@@ -63,7 +72,7 @@ func NewPicker(prompt string, height, width int, r io.Reader, renderChan chan *P
 	}
 
 	// render the first frame
-	renderChan <- picker
+	renderChan <- picker.View()
 
 	return picker
 }
@@ -79,8 +88,8 @@ func TTYReverse(str string) string {
 	return string(ReverseColor) + str + string(ResetColor)
 }
 
-func (p *Picker) View() string {
-	firstLine := p.prompt + p.query + "\n"
+func (p *Picker) View() *PickerView {
+	firstLine := p.prompt + p.query
 	candidates := p.all
 	if p.query == "" {
 		candidates = p.originals
@@ -95,7 +104,7 @@ func (p *Picker) View() string {
 	}
 	p.view[p.index] = TTYReverse(p.view[p.index])
 
-	return firstLine + strings.Join(p.view, "\n")
+	return &PickerView{firstLine, strings.Join(p.view, "\n")}
 }
 
 func (p *Picker) Sort() {
@@ -138,7 +147,7 @@ func (p *Picker) Up() {
 		p.index -= 1
 	}
 
-	p.render <- p
+	p.render <- p.View()
 }
 
 func (p *Picker) Down() {
@@ -146,7 +155,7 @@ func (p *Picker) Down() {
 		p.index += 1
 	}
 
-	p.render <- p
+	p.render <- p.View()
 }
 
 func (p *Picker) More(r rune) {
@@ -160,7 +169,7 @@ func (p *Picker) More(r rune) {
 		return p.all[i].score == 0.0
 	}))
 
-	p.render <- p
+	p.render <- p.View()
 }
 
 func (p *Picker) Back() {
@@ -175,7 +184,7 @@ func (p *Picker) Back() {
 
 	p.Sort()
 
-	p.render <- p
+	p.render <- p.View()
 }
 
 func (p *Picker) Clear() {
@@ -183,5 +192,5 @@ func (p *Picker) Clear() {
 	// Clear the stack except the bottom value
 	p.validSize.ClearUntilBottom()
 
-	p.render <- p
+	p.render <- p.View()
 }
