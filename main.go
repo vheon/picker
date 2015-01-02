@@ -86,22 +86,25 @@ func (tty *TTY) moveCursor(step steps) {
 	tty.Write(movement)
 }
 
-func (tty *TTY) showCursor() {
+func (tty *TTY) ShowCursor() {
 	tty.Write(ShowCursor)
 }
 
-func (tty *TTY) saveCursorPosition() {
+func (tty *TTY) SaveCursorPosition() {
 	tty.Write(SaveCursorPosition)
 }
 
-func (tty *TTY) restoreCursorPosition() {
+func (tty *TTY) RestoreCursorPosition() {
 	tty.Write(RestoreCursorPosition)
 }
 
-func (tty *TTY) eraseDisplayFromCursor() {
+func (tty *TTY) EraseDisplayFromCursor() {
 	tty.Write(EraseDisplayFromCursor)
 }
 
+// XXX: The renderer work is still spread across the file.
+// XXX: The renderer is still buggy when dealing with lots of candidates.
+// Possibly a problem of sincronization.
 type Renderer struct {
 	tty     *TTY
 	width   int
@@ -115,11 +118,11 @@ func (r *Renderer) PrepareForTerminalVim() {
 		Left: r.width,
 		Down: r.height,
 	})
-	r.tty.showCursor()
+	r.tty.ShowCursor()
 }
 
 func (r *Renderer) focusWritingPoint(picker *Picker) {
-	r.tty.restoreCursorPosition()
+	r.tty.RestoreCursorPosition()
 	r.tty.moveCursor(steps{
 		Right: len(picker.prompt) + len(picker.query),
 	})
@@ -137,7 +140,7 @@ func (r *Renderer) renderFirstFrame(picker *Picker) {
 	})
 
 	// save the pos
-	r.tty.saveCursorPosition()
+	r.tty.SaveCursorPosition()
 
 	r.focusWritingPoint(picker)
 }
@@ -148,8 +151,8 @@ func (r *Renderer) Start(channel chan *Picker) {
 	r.renderFirstFrame(<-channel)
 
 	for picker := range channel {
-		r.tty.restoreCursorPosition()
-		r.tty.eraseDisplayFromCursor()
+		r.tty.RestoreCursorPosition()
+		r.tty.EraseDisplayFromCursor()
 
 		// write what we should see
 		r.tty.WriteString(picker.View())
@@ -216,7 +219,7 @@ func main() {
 		for {
 			r, _, err := reader.ReadRune()
 			if err != nil || r == keyEscape || r == keyCtrlC {
-				tty.restoreCursorPosition()
+				tty.RestoreCursorPosition()
 				os.Exit(1)
 			}
 			input <- r
@@ -226,7 +229,7 @@ func main() {
 	for r := range input {
 		switch r {
 		case keyEnter:
-			tty.restoreCursorPosition()
+			tty.RestoreCursorPosition()
 			fmt.Println(picker.Selected())
 			return
 		case keyCtrlU, keyCtrlW:
