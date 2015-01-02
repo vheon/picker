@@ -33,15 +33,17 @@ type Picker struct {
 	width  int
 
 	view []string
+
+	render chan *Picker
 }
 
-func NewPicker(prompt string, height, width int, r io.Reader) *Picker {
+func NewPicker(prompt string, height, width int, r io.Reader, renderChan chan *Picker) *Picker {
 	candidates := readAllCandidates(r)
 
 	blank := make([]Candidate, height)
 	copy(blank, candidates[:min(height, len(candidates))])
 
-	return &Picker{
+	picker := &Picker{
 		all: candidates,
 		// create the stack with the first value in
 		validSize: Stack([]int{len(candidates)}),
@@ -56,7 +58,14 @@ func NewPicker(prompt string, height, width int, r io.Reader) *Picker {
 		originals: blank,
 
 		view: make([]string, height),
+
+		render: renderChan,
 	}
+
+	// render the first frame
+	renderChan <- picker
+
+	return picker
 }
 
 func cutAt(str string, width int) string {
@@ -128,12 +137,16 @@ func (p *Picker) Up() {
 	if p.index > 0 {
 		p.index -= 1
 	}
+
+	p.render <- p
 }
 
 func (p *Picker) Down() {
 	if p.index < p.height-1 && p.index < p.validSize.Peek()-1 {
 		p.index += 1
 	}
+
+	p.render <- p
 }
 
 func (p *Picker) More(r rune) {
@@ -146,6 +159,8 @@ func (p *Picker) More(r rune) {
 	p.validSize.Push(sort.Search(p.validSize.Peek(), func(i int) bool {
 		return p.all[i].score == 0.0
 	}))
+
+	p.render <- p
 }
 
 func (p *Picker) Back() {
@@ -159,10 +174,14 @@ func (p *Picker) Back() {
 	p.validSize.DropExceptBottom()
 
 	p.Sort()
+
+	p.render <- p
 }
 
 func (p *Picker) Clear() {
 	p.query = ""
 	// Clear the stack except the bottom value
 	p.validSize.ClearUntilBottom()
+
+	p.render <- p
 }

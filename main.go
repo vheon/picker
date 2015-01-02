@@ -109,6 +109,54 @@ func (tty *TTY) focusWritingPoint(picker *Picker) {
 	})
 }
 
+type Renderer struct {
+	tty     *TTY
+	width   int
+	height  int
+	visible int
+}
+
+func (r *Renderer) PrepareForTerminalVim() {
+	// start from the bottom of the screen
+	r.tty.moveCursor(steps{
+		Left: r.width,
+		Down: r.height,
+	})
+	r.tty.showCursor()
+}
+
+func (r *Renderer) renderFirstFrame(picker *Picker) {
+	// write the first view
+	r.tty.WriteString(picker.View())
+
+	// going width time to the left is more than necessary but it works in all
+	// situations and is simpler
+	r.tty.moveCursor(steps{
+		Up:   r.visible,
+		Left: r.width,
+	})
+
+	// save the pos
+	r.tty.saveCursorPosition()
+
+	r.tty.focusWritingPoint(picker)
+}
+
+func (r *Renderer) Start(channel chan *Picker) {
+
+	r.renderFirstFrame(<-channel)
+
+	for picker := range channel {
+		r.tty.restoreCursorPosition()
+		r.tty.eraseDisplayFromCursor()
+
+		// write what we should see
+		r.tty.WriteString(picker.View())
+
+		r.tty.focusWritingPoint(picker)
+	}
+}
+
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -146,31 +194,20 @@ func main() {
 		visible = height
 	}
 
-	picker := NewPicker("> ", visible, width, os.Stdin)
-
-	if vim {
-		// start from the bottom of the screen
-		tty.moveCursor(steps{
-			Left: width,
-			Down: height,
-		})
-		tty.showCursor()
+	renderChan := make(chan *Picker)
+	renderer := &Renderer{
+		tty:     tty,
+		height:  height,
+		width:   width,
+		visible: visible,
 	}
 
-	// write the first view
-	tty.WriteString(picker.View())
+	if vim {
+		renderer.PrepareForTerminalVim()
+	}
+	go renderer.Start(renderChan)
 
-	// going width time to the left is more than necessary but it works in all
-	// situations and is simpler
-	tty.moveCursor(steps{
-		Up:   visible,
-		Left: width,
-	})
-
-	// save the pos
-	tty.saveCursorPosition()
-
-	tty.focusWritingPoint(picker)
+	picker := NewPicker("> ", visible, width, os.Stdin, renderChan)
 
 	input := make(chan rune)
 	go func() {
@@ -202,13 +239,5 @@ func main() {
 		default:
 			picker.More(r)
 		}
-
-		tty.restoreCursorPosition()
-		tty.eraseDisplayFromCursor()
-
-		// write what we should see
-		tty.WriteString(picker.View())
-
-		tty.focusWritingPoint(picker)
 	}
 }
