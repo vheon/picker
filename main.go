@@ -153,7 +153,7 @@ func (r *Renderer) Start(channel chan *PickerView) {
 		r.tty.EraseDisplayFromCursor()
 
 		// write what we should see
-		r.tty.WriteString(view.firstLine + "\n" + view.lines)
+		r.tty.WriteString(view.String())
 
 		r.focusWritingPoint(view)
 	}
