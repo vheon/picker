@@ -102,13 +102,6 @@ func (tty *TTY) eraseDisplayFromCursor() {
 	tty.Write(EraseDisplayFromCursor)
 }
 
-func (tty *TTY) focusWritingPoint(picker *Picker) {
-	tty.restoreCursorPosition()
-	tty.moveCursor(steps{
-		Right: len(picker.prompt) + len(picker.query),
-	})
-}
-
 type Renderer struct {
 	tty     *TTY
 	width   int
@@ -125,6 +118,13 @@ func (r *Renderer) PrepareForTerminalVim() {
 	r.tty.showCursor()
 }
 
+func (r *Renderer) focusWritingPoint(picker *Picker) {
+	r.tty.restoreCursorPosition()
+	r.tty.moveCursor(steps{
+		Right: len(picker.prompt) + len(picker.query),
+	})
+}
+
 func (r *Renderer) renderFirstFrame(picker *Picker) {
 	// write the first view
 	r.tty.WriteString(picker.View())
@@ -139,11 +139,12 @@ func (r *Renderer) renderFirstFrame(picker *Picker) {
 	// save the pos
 	r.tty.saveCursorPosition()
 
-	r.tty.focusWritingPoint(picker)
+	r.focusWritingPoint(picker)
 }
 
 func (r *Renderer) Start(channel chan *Picker) {
-
+	// we special case the first picker to render since we have to save a
+	// position for later uses
 	r.renderFirstFrame(<-channel)
 
 	for picker := range channel {
@@ -153,7 +154,7 @@ func (r *Renderer) Start(channel chan *Picker) {
 		// write what we should see
 		r.tty.WriteString(picker.View())
 
-		r.tty.focusWritingPoint(picker)
+		r.focusWritingPoint(picker)
 	}
 }
 
