@@ -7,8 +7,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 const (
@@ -41,12 +39,10 @@ type TTY struct {
 
 func OpenTTY() (*TTY, error) {
 	file, err := os.OpenFile("/dev/tty", os.O_RDWR, 0)
-	tty := TTY{file}
-	return &tty, err
-}
-
-func (tty *TTY) Fd() int {
-	return int(tty.File.Fd())
+	if err != nil {
+		return nil, err
+	}
+	return &TTY{file}, nil
 }
 
 type steps struct {
@@ -212,13 +208,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	originalState, err := terminal.MakeRaw(tty.Fd())
+
+	old, err := tty.MakeRaw()
 	if err != nil {
 		panic(err)
 	}
-	defer terminal.Restore(tty.Fd(), originalState)
+	defer tty.Restore(old)
 
-	width, height, err := terminal.GetSize(tty.Fd())
+	width, height, err := tty.GetSize()
 	if err != nil {
 		panic(err)
 	}
