@@ -36,7 +36,7 @@ func (tty *TTY) GetSize() (int, int, error) {
 }
 
 func (tty *TTY) syscall(cmd uintptr, ptr unsafe.Pointer) error {
-	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, tty.File.Fd(), cmd, uintptr(ptr))
+	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, tty.Fd(), cmd, uintptr(ptr))
 	if err != 0 {
 		return errors.New("Syscall SYS_IOCTL error")
 	}
