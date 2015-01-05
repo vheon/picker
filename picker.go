@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"sort"
 	"sync"
@@ -120,8 +121,11 @@ func (p *Picker) Sort() {
 	sort.Sort(CandidateSlice(candidates))
 }
 
-func (p *Picker) Selected() string {
-	return p.all[p.index].value
+func (p *Picker) Selected() (string, error) {
+	if p.index < p.validSize.Peek() {
+		return p.all[p.index].value, nil
+	}
+	return "", errors.New("No Selection available")
 }
 
 func (p *Picker) Up() {

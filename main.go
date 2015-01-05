@@ -254,7 +254,11 @@ func main() {
 		switch r {
 		case keyEnter:
 			tty.RestoreCursorPosition()
-			fmt.Println(picker.Selected())
+			selected, err := picker.Selected()
+			if err != nil {
+				os.Exit(1)
+			}
+			fmt.Println(selected)
 			return
 		case keyCtrlU, keyCtrlW:
 			picker.Clear()
