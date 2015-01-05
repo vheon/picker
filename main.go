@@ -118,7 +118,6 @@ func (r *Renderer) PrepareForTerminalVim() {
 		Left: r.width,
 		Down: r.height,
 	})
-	r.tty.ShowCursor()
 }
 
 func (r *Renderer) focusWritingPoint(view *PickerView) {
@@ -159,10 +158,15 @@ func (r *Renderer) renderFirstFrame(view *PickerView) {
 		Left: r.width,
 	})
 
-	// save the pos
+	// We already rendered the first view but that was to find the right
+	// point so now we can save it erase the display from the point to the
+	// end of the terminal and then re-render the picker.
 	r.tty.SaveCursorPosition()
+	r.tty.EraseDisplayFromCursor()
+	r.renderPickerView(view)
 
 	r.focusWritingPoint(view)
+	r.tty.ShowCursor()
 }
 
 func (r *Renderer) Start(channel chan *PickerView) {
