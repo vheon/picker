@@ -19,6 +19,7 @@ const (
 	keyCtrlU     = 21
 	keyCtrlW     = 23
 	keyEnter     = '\r'
+	keyNL        = '\n'
 	keyEscape    = 27
 	keyUp        = 38
 	keyDown      = 40
@@ -252,7 +253,7 @@ func main() {
 
 	for r := range input {
 		switch r {
-		case keyEnter:
+		case keyEnter, keyNL:
 			tty.RestoreCursorPosition()
 			selected, err := picker.Selected()
 			if err != nil {
