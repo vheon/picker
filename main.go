@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -122,13 +123,33 @@ func (r *Renderer) PrepareForTerminalVim() {
 func (r *Renderer) focusWritingPoint(view *PickerView) {
 	r.tty.RestoreCursorPosition()
 	r.tty.moveCursor(steps{
-		Right: len(view.firstLine),
+		Right: len(view.input),
 	})
 }
 
+func cutAt(str string, width int) string {
+	if len(str) > width {
+		return str[:width]
+	}
+	return str
+}
+
+func TTYReverse(str string) string {
+	return string(ReverseColor) + str + string(ResetColor)
+}
+
+func (r *Renderer) renderPickerView(view *PickerView) {
+	view.input = cutAt(view.input, r.width)
+	for i := range view.lines {
+		view.lines[i] = cutAt(view.lines[i], r.width)
+	}
+	view.lines[view.selected] = TTYReverse(view.lines[view.selected])
+
+	r.tty.WriteString(view.input + "\n" + strings.Join(view.lines, "\n"))
+}
+
 func (r *Renderer) renderFirstFrame(view *PickerView) {
-	// write the first view
-	r.tty.WriteString(view.String())
+	r.renderPickerView(view)
 
 	// going width time to the left is more than necessary but it works in all
 	// situations and is simpler
@@ -152,9 +173,7 @@ func (r *Renderer) Start(channel chan *PickerView) {
 		r.tty.RestoreCursorPosition()
 		r.tty.EraseDisplayFromCursor()
 
-		// write what we should see
-		r.tty.WriteString(view.String())
-
+		r.renderPickerView(view)
 		r.focusWritingPoint(view)
 	}
 }
@@ -216,7 +235,7 @@ func main() {
 	}
 	go renderer.Start(renderChan)
 
-	picker := NewPicker("> ", visible, width, os.Stdin, renderChan)
+	picker := NewPicker("> ", visible, os.Stdin, renderChan)
 
 	input := make(chan rune)
 	go func() {

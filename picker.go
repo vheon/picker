@@ -3,7 +3,6 @@ package main
 import (
 	"io"
 	"sort"
-	"strings"
 	"sync"
 	"unicode/utf8"
 )
@@ -21,12 +20,9 @@ func (s *Stack) DropExceptBottom() {
 }
 
 type PickerView struct {
-	firstLine string
-	lines     string
-}
-
-func (pv *PickerView) String() string {
-	return pv.firstLine + "\n" + pv.lines
+	input    string
+	lines    []string
+	selected int
 }
 
 type Picker struct {
@@ -39,14 +35,13 @@ type Picker struct {
 
 	index  int
 	height int
-	width  int
 
 	view []string
 
 	render chan *PickerView
 }
 
-func NewPicker(prompt string, height, width int, r io.Reader, renderChan chan *PickerView) *Picker {
+func NewPicker(prompt string, height int, r io.Reader, renderChan chan *PickerView) *Picker {
 	candidates := readAllCandidates(r)
 
 	blank := make([]Candidate, height)
@@ -62,7 +57,6 @@ func NewPicker(prompt string, height, width int, r io.Reader, renderChan chan *P
 
 		index:  0,
 		height: height,
-		width:  width,
 
 		originals: blank,
 
@@ -77,17 +71,6 @@ func NewPicker(prompt string, height, width int, r io.Reader, renderChan chan *P
 	return picker
 }
 
-func cutAt(str string, width int) string {
-	if len(str) > width {
-		return str[:width]
-	}
-	return str
-}
-
-func TTYReverse(str string) string {
-	return string(ReverseColor) + str + string(ResetColor)
-}
-
 func (p *Picker) View() *PickerView {
 	firstLine := p.prompt + p.query
 	candidates := p.all
@@ -97,14 +80,13 @@ func (p *Picker) View() *PickerView {
 
 	for i := range p.view {
 		if i < len(candidates) && candidates[i].score > 0.0 {
-			p.view[i] = cutAt(candidates[i].value, p.width)
+			p.view[i] = candidates[i].value
 		} else {
 			p.view[i] = ""
 		}
 	}
-	p.view[p.index] = TTYReverse(p.view[p.index])
 
-	return &PickerView{firstLine, strings.Join(p.view, "\n")}
+	return &PickerView{firstLine, p.view, p.index}
 }
 
 func (p *Picker) Sort() {
