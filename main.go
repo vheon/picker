@@ -30,6 +30,7 @@ var (
 	EraseDisplayFromCursor = []byte{keyEscape, '[', 'J'}
 	ReverseColor           = []byte{keyEscape, '[', '7', 'm'}
 	ResetColor             = []byte{keyEscape, '[', '0', 'm'}
+	HideCursor             = []byte{keyEscape, '[', '?', '2', '5', 'l'}
 	ShowCursor             = []byte{keyEscape, '[', '?', '2', '5', 'h'}
 )
 
@@ -82,6 +83,10 @@ func (tty *TTY) moveCursor(step steps) {
 	}
 
 	tty.Write(movement)
+}
+
+func (tty *TTY) HideCursor() {
+	tty.Write(HideCursor)
 }
 
 func (tty *TTY) ShowCursor() {
@@ -145,6 +150,7 @@ func (r *Renderer) renderPickerView(view *PickerView) {
 }
 
 func (r *Renderer) renderFirstFrame(view *PickerView) {
+	r.tty.HideCursor()
 	r.renderPickerView(view)
 
 	// going width time to the left is more than necessary but it works in all
@@ -171,19 +177,14 @@ func (r *Renderer) Start(channel chan *PickerView) {
 	r.renderFirstFrame(<-channel)
 
 	for view := range channel {
+		r.tty.HideCursor()
 		r.tty.RestoreCursorPosition()
 		r.tty.EraseDisplayFromCursor()
 
 		r.renderPickerView(view)
 		r.focusWritingPoint(view)
+		r.tty.ShowCursor()
 	}
-}
-
-func maxf(a, b float32) float32 {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 func min(a, b int) int {
