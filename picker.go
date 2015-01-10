@@ -10,11 +10,15 @@ import (
 
 type Stack []int
 
-func (s *Stack) Empty() bool       { return len(*s) == 0 }
-func (s *Stack) Peek() int         { return (*s)[len(*s)-1] }
-func (s *Stack) Push(i int)        { (*s) = append((*s), i) }
-func (s *Stack) ClearUntilBottom() { (*s) = (*s)[:1] }
-func (s *Stack) DropExceptBottom() {
+func (s *Stack) Empty() bool { return len(*s) == 0 }
+func (s *Stack) Peek() int   { return (*s)[len(*s)-1] }
+func (s *Stack) Push(i int)  { (*s) = append((*s), i) }
+func (s *Stack) ClearButKeepBottom() {
+	if len(*s) > 1 {
+		(*s) = (*s)[:1]
+	}
+}
+func (s *Stack) DropUnlessSizeIsOne() {
 	if len(*s) > 1 {
 		(*s) = (*s)[:len(*s)-1]
 	}
@@ -171,7 +175,7 @@ func (p *Picker) Back() {
 	p.index = 0
 
 	// Drop the value of valid candidates on the stack
-	p.validSize.DropExceptBottom()
+	p.validSize.DropUnlessSizeIsOne()
 
 	p.Sort()
 
@@ -181,7 +185,7 @@ func (p *Picker) Back() {
 func (p *Picker) Clear() {
 	p.query = ""
 	// Clear the stack except the bottom value
-	p.validSize.ClearUntilBottom()
+	p.validSize.ClearButKeepBottom()
 
 	p.render <- p.View()
 }
