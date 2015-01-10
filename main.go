@@ -187,13 +187,6 @@ func (r *Renderer) Start(channel chan *PickerView) {
 	}
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 var (
 	visible int
 	vim     bool

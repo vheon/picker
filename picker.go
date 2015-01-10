@@ -46,7 +46,12 @@ func NewPicker(prompt string, height int, r io.Reader, renderChan chan *PickerVi
 	candidates := readAllCandidates(r)
 
 	blank := make([]Candidate, height)
-	copy(blank, candidates[:min(height, len(candidates))])
+
+	copylen := len(candidates)
+	if height < copylen {
+		copylen = height
+	}
+	copy(blank, candidates[:copylen])
 
 	picker := &Picker{
 		all: candidates,
