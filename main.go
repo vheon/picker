@@ -240,6 +240,7 @@ func main() {
 			r, _, err := reader.ReadRune()
 			if err != nil || r == keyEscape || r == keyCtrlC {
 				tty.RestoreCursorPosition()
+				tty.EraseDisplayFromCursor()
 				os.Exit(1)
 			}
 			input <- r
